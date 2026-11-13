@@ -1,0 +1,6 @@
+{
+  "name": "KoraMarket Nigeria",
+  "description": "Production Nigerian Naira e-commerce storefront and secure admin operations platform with bank-transfer checkout and owner-managed delivery.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

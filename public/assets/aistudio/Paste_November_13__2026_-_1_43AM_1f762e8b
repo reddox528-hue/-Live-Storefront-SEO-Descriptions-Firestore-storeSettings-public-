@@ -1,0 +1,1204 @@
+# MASTER BUILD PROMPT: COMPLETE FULL-STACK E-COMMERCE WEBSITE
+
+Act as a senior full-stack software engineer, database architect, cybersecurity specialist, UI/UX designer, and e-commerce development expert with over 15 years of professional experience.
+
+Your task is to PLAN, DESIGN, DEVELOP, TEST, AND IMPLEMENT a complete, production-ready e-commerce website with a fully functional customer storefront and a separate, secure admin dashboard.
+
+This must be a real, working full-stack application—not a static design, prototype, demo, or frontend-only website.
+
+Do not use fake data, mock authentication, simulated database operations, or non-functional buttons in the finished application. All essential features must connect to a real backend and database.
+
+If a feature requires external credentials or configuration, implement the integration structure and clearly explain how to configure it. Never invent API keys, payment credentials, or Firebase configuration.
+
+---
+
+# 1. PROJECT INFORMATION AND BUSINESS REQUIREMENTS
+
+Build a general-purpose e-commerce store where customers can browse products, create accounts, place orders, submit bank-transfer payments, and receive their purchased products through owner-managed delivery.
+
+The store must use these business settings:
+
+- Store type: General e-commerce store.
+- Currency: Nigerian Naira (NGN).
+- Currency symbol: ₦.
+- Payment method: Bank transfer only.
+- Delivery method: Managed directly by the store owner.
+- Language: English.
+- Default country: Nigeria.
+- Timezone: Africa/Lagos.
+- Date and time display: Appropriate for Nigeria.
+- Product prices must be displayed in Nigerian Naira.
+- The website must be responsive on mobile phones, tablets, laptops, and desktop computers.
+
+Make the store name, logo, contact information, bank details, delivery fees, social media links, and other business information editable through the admin dashboard.
+
+Do not hardcode business information that should be configurable.
+
+# 2. REQUIRED TECHNOLOGY STACK
+
+Use the following technology stack:
+
+Frontend:
+- React.
+- TypeScript.
+- Tailwind CSS.
+- Modern, reusable components.
+- Responsive layouts.
+- React Router or an appropriate routing solution.
+
+Backend and database:
+- Firebase Authentication.
+- Cloud Firestore.
+- Firebase Storage.
+- Firebase Cloud Functions.
+- Firebase Security Rules.
+
+Use the Firebase Admin SDK only in trusted server-side environments.
+
+Architecture requirements:
+- Use a clean, scalable, maintainable project structure.
+- Separate frontend, backend services, database operations, reusable components, and business logic.
+- Use reusable components instead of duplicating code.
+- Use TypeScript types and interfaces throughout the project.
+- Use environment variables for configuration and secrets.
+- Validate data on both the frontend and backend.
+- Implement proper loading, success, empty, and error states.
+- Do not expose private keys or administrative credentials in frontend code.
+
+If a different technology is necessary because of a platform limitation, explain why before changing the stack.
+
+# 3. CUSTOMER-FACING WEBSITE
+
+Create a professional, modern, visually attractive e-commerce storefront.
+
+The design should feel trustworthy, premium, clean, and easy to navigate.
+
+Use:
+- A professional color palette.
+- Consistent typography.
+- High-quality product image layouts.
+- Clear calls to action.
+- Attractive product cards.
+- Good spacing and visual hierarchy.
+- Smooth, subtle animations where appropriate.
+- Mobile-friendly navigation.
+- Accessible buttons, forms, and menus.
+
+Do not make the interface overcrowded.
+
+## A. Homepage
+
+Create a complete homepage containing:
+
+1. Announcement bar for promotions and important store updates.
+2. Header with store logo.
+3. Search bar.
+4. Navigation menu.
+5. Customer account icon.
+6. Shopping cart icon with live cart count.
+7. Hero banner with promotional content.
+8. Featured categories.
+9. Featured products.
+10. Best-selling products.
+11. New arrivals.
+12. Products currently on discount.
+13. Promotional banners.
+14. Customer testimonials or reviews.
+15. Newsletter subscription section.
+16. Store benefits such as secure ordering and reliable delivery.
+17. Footer containing contact information, navigation links, policies, and social media links.
+
+The admin must be able to manage promotional banners and homepage sections from the dashboard where practical.
+
+## B. Shop / All Products Page
+
+Create a complete product catalogue.
+
+Include:
+- Product grid.
+- Product images.
+- Product names.
+- Current prices.
+- Original prices where discounts apply.
+- Discount badges.
+- Stock availability.
+- Product ratings when reviews exist.
+- Add-to-cart button.
+- Quick-view option where appropriate.
+
+Provide:
+- Search by product name.
+- Filter by category.
+- Filter by price range.
+- Filter by availability.
+- Filter by discount.
+- Sorting by newest.
+- Sorting by price: low to high.
+- Sorting by price: high to low.
+- Sorting by popularity.
+
+Include pagination or efficient loading for large product catalogues.
+
+## C. Category Pages
+
+Each category must have its own dynamic page.
+
+When the admin creates a category, it must automatically become available on the customer website.
+
+When the admin edits or disables a category, the customer-facing website must reflect the change.
+
+Each category page should display:
+- Category name.
+- Category image or banner.
+- Category description.
+- Products belonging to that category.
+- Relevant sorting and filtering options.
+
+## D. Product Details Page
+
+Every product must have its own dynamic product details page.
+
+Display:
+- Product name.
+- Multiple product images.
+- Image gallery.
+- Product description.
+- Price.
+- Discounted price when applicable.
+- Product availability.
+- SKU where appropriate.
+- Product variants such as size, colour, or other options where applicable.
+- Quantity selector.
+- Add-to-cart button.
+- Buy-now button.
+- Product specifications.
+- Related products.
+- Customer reviews where available.
+
+Prevent customers from purchasing quantities greater than available stock.
+
+## E. Shopping Cart
+
+Build a fully functional shopping cart.
+
+Customers should be able to:
+- Add products.
+- Remove products.
+- Increase quantities.
+- Decrease quantities.
+- View product prices.
+- View subtotal.
+- View applicable discounts.
+- View delivery charges when calculated.
+- View the final estimated total.
+
+Keep the cart available when a customer returns to the website or logs into their account.
+
+Revalidate product availability, prices, and discounts on the server before creating an order.
+
+Never trust prices submitted by the customer's browser.
+
+## F. Customer Registration and Login
+
+Implement secure customer authentication.
+
+Include:
+- Customer registration.
+- Login.
+- Logout.
+- Forgot password.
+- Password reset.
+- Email verification where appropriate.
+- Customer profile.
+- Account details.
+- Saved delivery addresses.
+- Order history.
+
+Customers must be able to manage their own accounts without accessing administrative features.
+
+Use Firebase Authentication securely.
+
+## G. Checkout Page
+
+Create a simple, professional, user-friendly checkout process.
+
+Collect:
+- Customer full name.
+- Email address.
+- Phone number.
+- Delivery address.
+- State.
+- Local Government Area (LGA).
+- City or town.
+- Additional delivery instructions.
+
+Allow customers to select a saved address or enter a new one.
+
+Show:
+- Ordered products.
+- Quantities.
+- Subtotal.
+- Discounts.
+- Delivery charge.
+- Final amount payable.
+
+The system must calculate the final price securely on the backend.
+
+Customers must confirm their order before submission.
+
+## H. Bank Transfer Payment
+
+Bank transfer is the ONLY enabled payment method.
+
+Create a dedicated bank-transfer payment process.
+
+The administrator must be able to configure:
+- Bank name.
+- Account name.
+- Account number.
+- Additional transfer instructions.
+
+These details must be displayed during checkout and on the order confirmation page.
+
+After submitting an order:
+
+1. Generate a unique order number.
+2. Save the order in Firestore.
+3. Display the bank-transfer instructions.
+4. Show the exact amount the customer must transfer.
+5. Give the customer a reference containing the order number.
+6. Allow the customer to upload a transfer receipt or proof of payment.
+7. Allow the customer to submit the transfer reference and transfer date.
+8. Save the payment submission against the correct order.
+9. Notify the admin that a payment requires verification.
+
+Payment statuses must include:
+- Awaiting payment.
+- Payment submitted.
+- Under verification.
+- Paid.
+- Payment rejected.
+- Refunded.
+
+IMPORTANT SECURITY AND PAYMENT REQUIREMENTS:
+
+- Do not automatically mark an order as paid just because a customer uploads a receipt.
+- Do not trust screenshots or payment references without verification.
+- Only an authorized administrator can confirm or reject a bank transfer.
+- Keep an audit record of payment verification actions.
+- Customers must only be able to submit payment evidence for their own orders.
+- Prevent customers from changing payment status.
+- Do not integrate card payments, PayPal, Stripe, or other payment gateways unless explicitly requested later.
+
+If automated bank verification is added in the future, it must use a legitimate bank or payment-provider integration with verified server-side credentials and webhooks.
+
+## I. Order Confirmation
+
+After checkout, show:
+- Successful order submission message.
+- Unique order number.
+- Items ordered.
+- Total amount.
+- Bank account details.
+- Payment instructions.
+- Payment submission option.
+- Link to view order status.
+
+An order being created does not mean payment has been confirmed.
+
+## J. Customer Account Dashboard
+
+Create a customer account area with:
+
+- Account overview.
+- Personal information.
+- Edit profile.
+- Saved addresses.
+- My orders.
+- Order details.
+- Payment status.
+- Delivery status.
+- Payment receipt submission.
+- Change password.
+- Logout.
+
+Customers must only see their own private information and orders.
+
+## K. Additional Store Pages
+
+Create:
+- About Us.
+- Contact Us.
+- Frequently Asked Questions.
+- Privacy Policy.
+- Terms and Conditions.
+- Shipping and Delivery Policy.
+- Returns and Refund Policy.
+
+The content of these pages should be editable through the admin dashboard where practical.
+
+# 4. SECURE ADMIN DASHBOARD
+
+Create a separate, professional admin dashboard.
+
+Admin route example:
+
+/admin
+
+The admin dashboard must be protected by server-verified authorization.
+
+A normal customer must never be able to access administrative data or perform administrative operations.
+
+Do not rely only on hiding the admin link or checking the user's role in frontend JavaScript.
+
+Use Firebase Authentication and administrator custom claims assigned through a trusted server-side process.
+
+Never allow customers to register themselves as administrators or change their own roles.
+
+Create an initial secure admin setup procedure that explains how the store owner can create the first administrator account.
+
+## A. Admin Dashboard Overview
+
+Display useful business statistics:
+
+- Total revenue from verified paid orders.
+- Total orders.
+- Pending orders.
+- Orders awaiting payment verification.
+- Completed orders.
+- Total customers.
+- Total products.
+- Low-stock products.
+- Best-selling products.
+- Recent orders.
+- Recent customer registrations.
+
+Add date filters for sales and order statistics.
+
+Do not count unpaid or rejected payments as confirmed revenue.
+
+## B. Product Management
+
+The administrator must be able to:
+
+- Add products.
+- Edit products.
+- Delete or archive products.
+- Upload multiple product images.
+- Set product names.
+- Write product descriptions.
+- Set product prices.
+- Set discounted prices through the discount system.
+- Add product SKU.
+- Assign categories.
+- Set stock quantities.
+- Manage product variants.
+- Mark products as featured.
+- Publish or unpublish products.
+- Mark products as new arrivals.
+- Manage product availability.
+
+All product changes must automatically appear on the customer website.
+
+The admin must be able to manage products entirely through the dashboard without editing source code.
+
+Validate all product information before saving.
+
+## C. Category Management
+
+Allow administrators to:
+
+- Create categories.
+- Edit categories.
+- Upload category images.
+- Add descriptions.
+- Set category display order.
+- Activate or deactivate categories.
+- View products assigned to each category.
+
+New categories must automatically appear in the customer navigation and catalogue where appropriate.
+
+Do not permanently delete a category that still contains products without first requiring reassignment or another safe action.
+
+## D. Discount Management
+
+Build a functional discount management system.
+
+Allow the admin to:
+
+- Create discounts.
+- Edit discounts.
+- Delete or deactivate discounts.
+- Apply discounts to selected products.
+- Set percentage discounts.
+- Set fixed-amount discounts.
+- Set start dates.
+- Set expiration dates.
+- Activate or deactivate discounts.
+
+Display discounted prices automatically on the customer website.
+
+Prevent invalid discounts, negative prices, expired discounts, and discounts greater than the product's original price.
+
+The backend must calculate the actual discount and final price.
+
+Keep the original product price intact so the discount can expire without losing the original price.
+
+## E. Order Management
+
+Create a complete order management section.
+
+Display:
+- Order number.
+- Customer name.
+- Phone number.
+- Email.
+- Ordered products.
+- Quantities.
+- Order total.
+- Payment method.
+- Payment status.
+- Delivery status.
+- Order date.
+
+Allow authorized administrators to:
+
+- View orders.
+- Search orders.
+- Filter by date.
+- Filter by payment status.
+- Filter by delivery status.
+- View complete order details.
+- Confirm verified bank payments.
+- Reject payment submissions with a reason.
+- Update order status.
+- Add internal notes.
+- View uploaded payment receipts.
+- View customer delivery information.
+
+Order statuses should include:
+- Pending.
+- Confirmed.
+- Processing.
+- Ready for dispatch.
+- Out for delivery.
+- Delivered.
+- Cancelled.
+
+Payment status and delivery status must be stored separately.
+
+Record who made each important status change and when.
+
+## F. Delivery Management
+
+The store owner manages delivery directly.
+
+Create a delivery management section.
+
+Allow the admin to:
+- Configure delivery fees.
+- Create delivery zones.
+- Set different delivery charges for different locations.
+- Set free-delivery thresholds where applicable.
+- Enable or disable delivery zones.
+- Set estimated delivery times.
+- View customer delivery addresses.
+- Assign delivery personnel or delivery notes where needed.
+- Update delivery status.
+- Add delivery tracking notes.
+- Record the delivery date.
+- Mark orders as delivered.
+
+Allow the store owner to configure supported Nigerian states and delivery locations.
+
+Do not invent delivery charges. They must be configurable.
+
+If an address is outside supported delivery zones, clearly inform the customer and prevent checkout until the owner enables or approves delivery to that location.
+
+## G. Customer Management
+
+Allow administrators to:
+- View customers.
+- Search customers.
+- View customer contact information.
+- View order history.
+- View total purchases.
+- View customer account status.
+
+Do not expose sensitive authentication credentials or passwords.
+
+## H. Inventory Management
+
+Create inventory management features.
+
+Include:
+- Current stock.
+- Low-stock alerts.
+- Out-of-stock alerts.
+- Stock adjustments.
+- Stock movement history.
+- Product availability.
+
+Prevent overselling.
+
+Stock must be updated safely when orders are placed, cancelled, or fulfilled according to a clearly defined inventory policy.
+
+Use server-side transactions to prevent two customers from purchasing the last available unit simultaneously.
+
+Provide a safe procedure for restoring stock when an order is cancelled or payment is rejected.
+
+## I. Store Settings
+
+Create an admin settings section where the owner can manage:
+
+- Store name.
+- Logo.
+- Store description.
+- Contact email.
+- Phone number.
+- WhatsApp contact.
+- Business address.
+- Social media links.
+- Bank name.
+- Bank account name.
+- Bank account number.
+- Transfer instructions.
+- Delivery zones.
+- Delivery fees.
+- Store policies.
+- Homepage banners.
+- SEO settings.
+- Notification settings.
+
+Only authorized administrators can edit these settings.
+
+Protect sensitive information and restrict access to payment and administrative configuration.
+
+# 5. DATABASE ARCHITECTURE
+
+Use Cloud Firestore as the primary database and design it for scalability, security, and efficient queries.
+
+Create a properly structured database with these collections:
+
+## users
+
+Fields:
+- uid
+- fullName
+- email
+- phone
+- role
+- accountStatus
+- createdAt
+- updatedAt
+
+Roles should be customer or admin, but admin privileges must be enforced through trusted server-side authorization and custom claims.
+
+## products
+
+Fields:
+- productId
+- name
+- slug
+- description
+- shortDescription
+- categoryId
+- images
+- sku
+- priceKobo
+- stockQuantity
+- variants
+- isFeatured
+- isNewArrival
+- isPublished
+- createdAt
+- updatedAt
+
+Store money as integer amounts in kobo to avoid floating-point rounding errors. Display amounts to customers in naira using correct currency formatting.
+
+## categories
+
+Fields:
+- categoryId
+- name
+- slug
+- description
+- image
+- displayOrder
+- isActive
+- createdAt
+- updatedAt
+
+## discounts
+
+Fields:
+- discountId
+- name
+- type
+- value
+- applicableProductIds
+- startAt
+- endAt
+- isActive
+- createdAt
+- updatedAt
+
+## orders
+
+Fields:
+- orderId
+- orderNumber
+- customerId
+- customerSnapshot
+- items
+- subtotalKobo
+- discountTotalKobo
+- deliveryFeeKobo
+- totalKobo
+- currency
+- paymentMethod
+- paymentStatus
+- deliveryStatus
+- deliveryAddress
+- deliveryInstructions
+- adminNotes
+- createdAt
+- updatedAt
+
+Each order item must store a snapshot of the product name, SKU, selected variant, quantity, unit price, and discount at the time of purchase.
+
+Changing a product later must not change historical order records.
+
+## payments
+
+Fields:
+- paymentId
+- orderId
+- customerId
+- amountKobo
+- paymentMethod
+- transferReference
+- transferDate
+- receiptImageUrl
+- status
+- verificationNotes
+- verifiedBy
+- verifiedAt
+- createdAt
+- updatedAt
+
+## carts
+
+Fields:
+- cartId
+- customerId
+- items
+- createdAt
+- updatedAt
+
+## addresses
+
+Fields:
+- addressId
+- customerId
+- fullName
+- phone
+- state
+- lga
+- city
+- streetAddress
+- additionalInstructions
+- isDefault
+- createdAt
+- updatedAt
+
+## deliveryZones
+
+Fields:
+- zoneId
+- name
+- supportedStates
+- supportedLocations
+- deliveryFeeKobo
+- estimatedDeliveryDays
+- freeDeliveryThresholdKobo
+- isActive
+- createdAt
+- updatedAt
+
+## inventoryLogs
+
+Fields:
+- logId
+- productId
+- changeType
+- quantityChanged
+- previousQuantity
+- newQuantity
+- relatedOrderId
+- performedBy
+- reason
+- createdAt
+
+## storeSettings
+
+Store configurable public and private settings in appropriately separated documents.
+
+Examples:
+- Store information.
+- Bank-transfer instructions.
+- Delivery configuration.
+- Homepage configuration.
+- Contact details.
+- SEO configuration.
+
+Do not expose private administrative configuration through public read permissions.
+
+## reviews
+
+Fields:
+- reviewId
+- productId
+- customerId
+- customerName
+- rating
+- comment
+- isApproved
+- createdAt
+- updatedAt
+
+Only customers who have genuinely purchased a product should be eligible to submit a verified-purchase review.
+
+Reviews should require moderation before public display.
+
+## notifications
+
+Fields:
+- notificationId
+- recipientId
+- type
+- title
+- message
+- relatedOrderId
+- isRead
+- createdAt
+
+## newsletterSubscribers
+
+Fields:
+- subscriberId
+- email
+- status
+- createdAt
+
+Add any other collections required for a complete, secure, well-organized application.
+
+For every collection:
+- Define the document structure.
+- Define the required fields.
+- Define validation rules.
+- Define access permissions.
+- Create appropriate Firestore indexes.
+- Avoid unnecessary duplication.
+- Use server timestamps.
+- Use transactions and batched writes where appropriate.
+
+# 6. BACKEND LOGIC AND BUSINESS RULES
+
+Implement the actual backend operations using Firebase Cloud Functions and secure Firestore access.
+
+At minimum, implement:
+
+1. Secure order creation.
+2. Server-side price calculation.
+3. Server-side discount validation.
+4. Stock validation.
+5. Inventory reservation or deduction using transactions.
+6. Payment submission.
+7. Payment verification by an administrator.
+8. Order status updates.
+9. Delivery fee calculation.
+10. Stock restoration for eligible cancelled orders.
+11. Admin-only product management.
+12. Admin-only category management.
+13. Admin-only discount management.
+14. Admin-only store settings management.
+15. Customer order retrieval with ownership checks.
+16. Admin dashboard statistics.
+17. Notification creation.
+
+All sensitive business operations must be validated on the server.
+
+The server must calculate totals from trusted product, discount, and delivery data. Never trust totals, product prices, roles, or payment statuses supplied by the browser.
+
+Use atomic transactions where multiple database records must remain consistent.
+
+Use idempotency protections where appropriate so repeated requests cannot accidentally create duplicate orders or payments.
+
+# 7. SECURITY REQUIREMENTS
+
+Security is a major priority.
+
+Implement:
+
+- Firebase Authentication.
+- Firebase custom claims for admin privileges.
+- Strict Firestore Security Rules.
+- Strict Firebase Storage Security Rules.
+- Server-side role verification.
+- Customer ownership checks.
+- Input validation.
+- File upload validation.
+- Protection against unauthorized database writes.
+- Protection against customer privilege escalation.
+- Secure error handling.
+- Rate limiting or abuse protections where appropriate.
+- Safe handling of personal information.
+- Protection against duplicate orders.
+- Protection against overselling.
+- Secure handling of uploaded payment receipts.
+
+A customer must never be able to:
+- Access the admin dashboard data.
+- Create an admin account.
+- Change their role to admin.
+- Change another customer's information.
+- View another customer's orders.
+- Change an order's payment status to paid.
+- Change product prices.
+- Change stock quantities.
+- Change delivery fees.
+- Edit store settings.
+- Approve their own payment.
+
+Do not depend on frontend route protection alone.
+
+Provide complete Firestore Security Rules and Storage Security Rules.
+
+Ensure that Cloud Functions independently verify authentication, authorization, ownership, and all relevant input data.
+
+Never place Firebase Admin SDK credentials, private keys, or service account JSON in frontend files.
+
+# 8. IMAGE AND FILE MANAGEMENT
+
+Use Firebase Storage for:
+- Product images.
+- Category images.
+- Store logo.
+- Promotional banners.
+- Payment receipts.
+
+Implement:
+- Image preview before upload.
+- File type validation.
+- File size validation.
+- Upload progress.
+- Upload error handling.
+- Secure file access.
+- Image optimization where practical.
+- Sensible image dimensions and formats.
+
+Only authorized admins can upload product, category, logo, and banner images.
+
+Customers may upload payment receipts only for their own orders.
+
+Do not allow uploaded files to execute as code.
+
+# 9. NOTIFICATIONS
+
+Implement an in-app notification system.
+
+Customer notifications should cover:
+- Order successfully placed.
+- Payment evidence submitted.
+- Payment confirmed.
+- Payment rejected.
+- Order processing.
+- Order dispatched.
+- Order delivered.
+- Order cancelled.
+
+Admin notifications should cover:
+- New order received.
+- New payment submission.
+- Payment awaiting verification.
+- Low stock.
+- Out-of-stock products.
+- New customer registration where appropriate.
+
+Design the notification system so email or other notification providers can be added later.
+
+Do not pretend that emails or SMS messages are being sent unless the provider has actually been configured and tested.
+
+# 10. SEARCH ENGINE OPTIMIZATION AND PERFORMANCE
+
+Make the public storefront search-engine friendly.
+
+Include:
+- Unique page titles.
+- Meta descriptions.
+- Clean URLs and product slugs.
+- Product structured data where supported.
+- Open Graph metadata.
+- Descriptive image alt text.
+- Sitemap.
+- Robots.txt.
+- Canonical URLs where appropriate.
+
+Optimize:
+- Image loading.
+- Lazy loading.
+- Database queries.
+- Pagination.
+- Component rendering.
+- Mobile performance.
+
+Do not load the entire product database unnecessarily.
+
+# 11. CUSTOMER EXPERIENCE AND ACCESSIBILITY
+
+Make the application easy to use for customers who may not be technically experienced.
+
+Include:
+- Clear navigation.
+- Easy checkout.
+- Helpful instructions.
+- Form validation.
+- Clear error messages.
+- Confirmation messages.
+- Loading indicators.
+- Empty states.
+- Accessible forms.
+- Keyboard-friendly navigation.
+- Good color contrast.
+- Responsive layouts.
+
+Use a clear and consistent design system across the entire website and admin dashboard.
+
+# 12. REQUIRED ROUTES AND PAGE STRUCTURE
+
+Create appropriate customer routes, including:
+
+/
+ /shop
+ /category/:slug
+ /product/:slug
+ /cart
+ /checkout
+ /login
+ /register
+ /forgot-password
+ /account
+ /account/orders
+ /account/orders/:orderId
+ /account/addresses
+ /about
+ /contact
+ /faq
+ /privacy-policy
+ /terms
+ /shipping-policy
+ /returns-policy
+
+Create protected admin routes, including:
+
+/admin
+/admin/products
+/admin/products/new
+/admin/products/:productId/edit
+/admin/categories
+/admin/discounts
+/admin/orders
+/admin/orders/:orderId
+/admin/payments
+/admin/customers
+/admin/inventory
+/admin/delivery
+/admin/reviews
+/admin/notifications
+/admin/settings
+
+You may improve the route structure if needed, but all corresponding features must work.
+
+# 13. TESTING AND QUALITY ASSURANCE
+
+Do not consider the project complete until you have tested the major workflows.
+
+Test the following:
+
+CUSTOMER TESTS:
+- Customer registration.
+- Customer login.
+- Password reset.
+- Product browsing.
+- Product search.
+- Category filtering.
+- Product details.
+- Add to cart.
+- Update cart quantity.
+- Checkout.
+- Bank-transfer instructions.
+- Payment receipt upload.
+- Order history.
+- Order tracking.
+- Customer profile updates.
+
+ADMIN TESTS:
+- Admin login.
+- Admin dashboard access.
+- Create product.
+- Edit product.
+- Delete or archive product.
+- Upload product images.
+- Create category.
+- Edit category.
+- Create discount.
+- Edit discount.
+- View orders.
+- Verify payment.
+- Reject payment.
+- Update delivery status.
+- Manage delivery zones.
+- Adjust inventory.
+- Edit store settings.
+
+SECURITY TESTS:
+- Customer attempting to access /admin.
+- Customer attempting to read another customer's order.
+- Customer attempting to edit another customer's profile.
+- Customer attempting to change their role.
+- Customer attempting to mark an order as paid.
+- Customer attempting to manipulate product prices.
+- Customer attempting to modify stock.
+- Unauthorized image upload.
+- Unauthenticated database access.
+
+Verify that all these operations are correctly blocked where necessary.
+
+# 14. DEPLOYMENT AND SETUP
+
+Prepare the application for real deployment.
+
+Provide:
+- Complete project structure.
+- All necessary source files.
+- Firebase project setup instructions.
+- Authentication setup instructions.
+- Firestore database setup.
+- Firebase Storage setup.
+- Cloud Functions setup.
+- Security Rules.
+- Firestore indexes.
+- Environment variable example file.
+- Required dependencies.
+- Development commands.
+- Production build commands.
+- Deployment instructions.
+- First admin account creation procedure.
+- Troubleshooting instructions.
+
+Create a README file explaining how to install, configure, run, test, and deploy the project.
+
+Do not claim the website is live or deployed unless deployment has actually succeeded.
+
+Do not leave essential functions as TODO comments or placeholders.
+
+If credentials or external configuration are required, clearly identify the exact steps I must complete.
+
+# 15. DEVELOPMENT WORKFLOW AND IMPORTANT INSTRUCTIONS
+
+Follow this development sequence:
+
+PHASE 1: Planning
+- Analyze the complete requirements.
+- Design the application architecture.
+- Plan the database.
+- Plan authentication and authorization.
+- Plan customer and admin workflows.
+- Identify required Firebase configuration.
+
+PHASE 2: UI/UX
+- Build the complete responsive customer storefront.
+- Build the complete responsive admin dashboard.
+- Ensure both sides use a consistent design system.
+
+PHASE 3: Backend
+- Configure Firebase services.
+- Implement authentication.
+- Implement database operations.
+- Implement storage.
+- Implement Cloud Functions.
+- Implement business rules.
+
+PHASE 4: Integration
+- Connect every customer-facing feature to the backend.
+- Connect every admin feature to the backend.
+- Ensure product and category changes update the storefront automatically.
+- Ensure discounts are reflected correctly.
+- Ensure orders and payment submissions are saved correctly.
+
+PHASE 5: Security
+- Implement and test security rules.
+- Verify admin permissions.
+- Verify customer ownership restrictions.
+- Test unauthorized access.
+
+PHASE 6: Testing
+- Test all major customer and admin workflows.
+- Fix bugs.
+- Remove mock data and non-functional controls.
+- Verify database consistency.
+
+PHASE 7: Deployment
+- Prepare the project for production.
+- Provide complete setup and deployment documentation.
+- List any remaining external configuration that requires my action.
+
+# 16. FINAL DELIVERY REQUIREMENTS
+
+I expect a complete, functional e-commerce application.
+
+The final result must include:
+
+1. A professional customer-facing website.
+2. A complete admin dashboard.
+3. A real Firebase backend.
+4. A properly structured Firestore database.
+5. Secure customer authentication.
+6. Secure administrator authentication and authorization.
+7. Complete product management.
+8. Complete category management.
+9. Complete discount management.
+10. Functional shopping cart.
+11. Functional checkout.
+12. Bank-transfer payment submission and verification.
+13. Complete order management.
+14. Owner-managed delivery management.
+15. Inventory management.
+16. Customer account management.
+17. Notifications.
+18. Secure image and file uploads.
+19. Firestore and Storage Security Rules.
+20. Cloud Functions.
+21. Testing documentation.
+22. Setup and deployment documentation.
+
+IMPORTANT FINAL INSTRUCTION:
+
+Do not just generate a homepage and claim the project is complete.
+
+Build the complete application, including its backend, database, authentication, admin dashboard, and all major workflows.
+
+Do not silently skip difficult features.
+
+If the project is too large to complete in one generation, divide it into clearly defined implementation phases. Maintain the existing project structure and continue from the last completed phase. Do not restart the project or replace working features unnecessarily.
+
+Before finishing, provide a completion report showing:
+- Features implemented.
+- Features tested.
+- Firebase services configured.
+- Security measures implemented.
+- Any external credentials or manual setup still required.
+- Any features that remain incomplete.
+
+The goal is to deliver a secure, scalable, professional e-commerce platform that a real business owner can operate without editing code every time they need to add products, update prices, create discounts, manage orders, or manage deliveries.

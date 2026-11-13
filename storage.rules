@@ -1,0 +1,47 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+    function isSignedIn() {
+      return request.auth != null && request.auth.token.email_verified == true;
+    }
+
+    function isAdmin() {
+      return isSignedIn() && (
+        request.auth.token.email == 'reddox528@gmail.com' ||
+        request.auth.token.admin == true
+      );
+    }
+
+    function isValidImageOrPdf() {
+      return request.resource.size > 0
+        && request.resource.size <= 5 * 1024 * 1024
+        && (
+          request.resource.contentType.matches('image/(jpeg|png|webp)') ||
+          request.resource.contentType == 'application/pdf'
+        );
+    }
+
+    function isValidImageOnly() {
+      return request.resource.size > 0
+        && request.resource.size <= 5 * 1024 * 1024
+        && request.resource.contentType.matches('image/(jpeg|png|webp)');
+    }
+
+    // Public Storefront Media (Products, Categories, Logo, Banners) - Admin Write Only
+    match /storefront/{folder}/{fileName} {
+      allow read: if true;
+      allow write: if isAdmin() && folder in ['products', 'categories', 'branding', 'banners'] && isValidImageOnly();
+    }
+
+    // Customer Payment Receipts - Strictly Scoped to Customer UID
+    match /receipts/{customerId}/{orderId}/{fileName} {
+      allow read: if isSignedIn() && (request.auth.uid == customerId || isAdmin());
+      allow write: if isSignedIn() && request.auth.uid == customerId && isValidImageOrPdf();
+    }
+
+    // Default deny everything else
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+  }
+}

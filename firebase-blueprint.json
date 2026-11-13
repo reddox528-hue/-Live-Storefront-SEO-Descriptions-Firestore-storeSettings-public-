@@ -1,0 +1,431 @@
+{
+  "entities": {
+    "User": {
+      "title": "User",
+      "description": "Registered storefront user profile",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "fullName": { "type": "string", "minLength": 1, "maxLength": 120 },
+        "email": { "type": "string", "format": "email", "maxLength": 180 },
+        "phone": { "type": "string", "maxLength": 30 },
+        "role": { "type": "string", "enum": ["customer", "admin"] },
+        "accountStatus": { "type": "string", "enum": ["active", "suspended"] },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["uid", "fullName", "email", "role", "accountStatus", "createdAt", "updatedAt"]
+    },
+    "AdminRecord": {
+      "title": "AdminRecord",
+      "description": "Trusted server-side administrator registry",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "email": { "type": "string", "format": "email", "maxLength": 180 },
+        "grantedBy": { "type": "string", "maxLength": 180 },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["uid", "email", "createdAt"]
+    },
+    "Category": {
+      "title": "Category",
+      "description": "Product category metadata and visibility controls",
+      "type": "object",
+      "properties": {
+        "categoryId": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "name": { "type": "string", "minLength": 1, "maxLength": 100 },
+        "slug": { "type": "string", "minLength": 1, "maxLength": 120, "pattern": "^[a-z0-9\\-]+$" },
+        "description": { "type": "string", "maxLength": 1000 },
+        "image": { "type": "string", "maxLength": 2000 },
+        "displayOrder": { "type": "integer" },
+        "isActive": { "type": "boolean" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["categoryId", "name", "slug", "displayOrder", "isActive", "createdAt", "updatedAt"]
+    },
+    "Product": {
+      "title": "Product",
+      "description": "Storefront product stored with integer kobo pricing",
+      "type": "object",
+      "properties": {
+        "productId": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "name": { "type": "string", "minLength": 1, "maxLength": 180 },
+        "slug": { "type": "string", "minLength": 1, "maxLength": 200, "pattern": "^[a-z0-9\\-]+$" },
+        "description": { "type": "string", "maxLength": 8000 },
+        "shortDescription": { "type": "string", "maxLength": 400 },
+        "categoryId": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "images": { "type": "array" },
+        "sku": { "type": "string", "minLength": 1, "maxLength": 64 },
+        "priceKobo": { "type": "integer" },
+        "stockQuantity": { "type": "integer" },
+        "variants": { "type": "array" },
+        "specifications": { "type": "array" },
+        "salesCount": { "type": "integer" },
+        "isFeatured": { "type": "boolean" },
+        "isNewArrival": { "type": "boolean" },
+        "isPublished": { "type": "boolean" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["productId", "name", "slug", "categoryId", "images", "sku", "priceKobo", "stockQuantity", "isFeatured", "isNewArrival", "isPublished", "createdAt", "updatedAt"]
+    },
+    "Discount": {
+      "title": "Discount",
+      "description": "Time-bound percentage or fixed kobo product discount",
+      "type": "object",
+      "properties": {
+        "discountId": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "name": { "type": "string", "minLength": 1, "maxLength": 120 },
+        "type": { "type": "string", "enum": ["percentage", "fixed_kobo"] },
+        "value": { "type": "integer" },
+        "applicableProductIds": { "type": "array" },
+        "startAt": { "type": "string", "format": "date-time" },
+        "endAt": { "type": "string", "format": "date-time" },
+        "isActive": { "type": "boolean" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["discountId", "name", "type", "value", "applicableProductIds", "startAt", "endAt", "isActive", "createdAt", "updatedAt"]
+    },
+    "Order": {
+      "title": "Order",
+      "description": "Customer order with immutable product snapshots and separated order, payment, and delivery statuses",
+      "type": "object",
+      "properties": {
+        "orderId": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "orderNumber": { "type": "string", "minLength": 3, "maxLength": 40 },
+        "customerId": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "customerSnapshot": { "type": "object" },
+        "items": { "type": "array" },
+        "subtotalKobo": { "type": "integer" },
+        "discountTotalKobo": { "type": "integer" },
+        "deliveryFeeKobo": { "type": "integer" },
+        "totalKobo": { "type": "integer" },
+        "currency": { "type": "string", "enum": ["NGN"] },
+        "paymentMethod": { "type": "string", "enum": ["bank_transfer"] },
+        "orderStatus": { "type": "string", "enum": ["pending", "received", "processing", "ready_for_dispatch", "out_for_delivery", "delivered", "cancelled"] },
+        "paymentStatus": { "type": "string", "enum": ["awaiting_payment", "payment_submitted", "under_verification", "paid", "payment_rejected", "refunded"] },
+        "deliveryStatus": { "type": "string", "enum": ["pending", "confirmed", "processing", "ready_for_dispatch", "out_for_delivery", "delivered", "cancelled"] },
+        "deliveryAddress": { "type": "object" },
+        "deliveryZoneId": { "type": "string", "maxLength": 128 },
+        "deliveryInstructions": { "type": "string", "maxLength": 500 },
+        "deliveryTrackingNotes": { "type": "string", "maxLength": 1000 },
+        "deliveryPersonnel": { "type": "string", "maxLength": 120 },
+        "statusHistory": { "type": "array" },
+        "receivedAt": { "type": "string", "format": "date-time" },
+        "receivedBy": { "type": "string", "maxLength": 128 },
+        "receivedByEmail": { "type": "string", "maxLength": 180 },
+        "deliveredAt": { "type": "string", "format": "date-time" },
+        "cancelledAt": { "type": "string", "format": "date-time" },
+        "cancellationReason": { "type": "string", "maxLength": 500 },
+        "refundedAt": { "type": "string", "format": "date-time" },
+        "refundNotes": { "type": "string", "maxLength": 500 },
+        "adminNotes": { "type": "string", "maxLength": 2000 },
+        "stockDeducted": { "type": "boolean" },
+        "idempotencyKey": { "type": "string", "maxLength": 128 },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["orderId", "orderNumber", "customerId", "customerSnapshot", "items", "subtotalKobo", "discountTotalKobo", "deliveryFeeKobo", "totalKobo", "currency", "paymentMethod", "orderStatus", "paymentStatus", "deliveryStatus", "deliveryAddress", "stockDeducted", "createdAt", "updatedAt"]
+    },
+    "OrderCounter": {
+      "title": "OrderCounter",
+      "description": "Atomic daily sequence counter for generating unique ORD-YYYYMMDD-XXXX order numbers",
+      "type": "object",
+      "properties": {
+        "dateKey": { "type": "string", "minLength": 8, "maxLength": 16, "pattern": "^[0-9]+$" },
+        "lastSequence": { "type": "integer" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["dateKey", "lastSequence", "updatedAt"]
+    },
+    "OrderStatusHistory": {
+      "title": "OrderStatusHistory",
+      "description": "Immutable transition history log for order, payment, and delivery status changes",
+      "type": "object",
+      "properties": {
+        "historyId": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "orderId": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "customerId": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "statusField": { "type": "string", "enum": ["orderStatus", "paymentStatus", "deliveryStatus"] },
+        "previousStatus": { "type": "string", "maxLength": 64 },
+        "newStatus": { "type": "string", "minLength": 1, "maxLength": 64 },
+        "changedBy": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "changedByEmail": { "type": "string", "maxLength": 180 },
+        "changedByRole": { "type": "string", "enum": ["customer", "admin", "system"] },
+        "notes": { "type": "string", "maxLength": 600 },
+        "timestamp": { "type": "string", "format": "date-time" }
+      },
+      "required": ["historyId", "orderId", "customerId", "statusField", "previousStatus", "newStatus", "changedBy", "changedByRole", "timestamp"]
+    },
+    "EmailNotification": {
+      "title": "EmailNotification",
+      "description": "Outbox and delivery tracking records for automated customer and admin email notifications",
+      "type": "object",
+      "properties": {
+        "notificationId": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "eventId": { "type": "string", "minLength": 3, "maxLength": 200 },
+        "orderId": { "type": "string", "maxLength": 128 },
+        "orderNumber": { "type": "string", "maxLength": 40 },
+        "recipient": { "type": "string", "minLength": 3, "maxLength": 180 },
+        "recipientType": { "type": "string", "enum": ["customer", "admin"] },
+        "notificationType": { "type": "string", "minLength": 1, "maxLength": 64 },
+        "subject": { "type": "string", "minLength": 1, "maxLength": 240 },
+        "htmlBody": { "type": "string", "maxLength": 120000 },
+        "status": { "type": "string", "enum": ["queued", "sent", "failed"] },
+        "deliveryStatus": { "type": "string", "enum": ["pending", "accepted_by_provider", "delivered", "bounced", "failed"] },
+        "providerMessageId": { "type": "string", "maxLength": 180 },
+        "attemptCount": { "type": "integer" },
+        "failureReason": { "type": "string", "maxLength": 1000 },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" },
+        "lastAttemptAt": { "type": "string", "format": "date-time" },
+        "sentAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["notificationId", "eventId", "orderId", "orderNumber", "recipient", "recipientType", "notificationType", "subject", "status", "attemptCount", "createdAt"]
+    },
+    "Payment": {
+      "title": "Payment",
+      "description": "Bank transfer evidence submission and admin verification record",
+      "type": "object",
+      "properties": {
+        "paymentId": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "orderId": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "customerId": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "amountKobo": { "type": "integer" },
+        "paymentMethod": { "type": "string", "enum": ["bank_transfer"] },
+        "transferReference": { "type": "string", "minLength": 2, "maxLength": 120 },
+        "transferDate": { "type": "string", "minLength": 4, "maxLength": 64 },
+        "receiptImageUrl": { "type": "string", "maxLength": 2000 },
+        "status": { "type": "string", "enum": ["payment_submitted", "under_verification", "paid", "payment_rejected", "refunded"] },
+        "verificationNotes": { "type": "string", "maxLength": 1000 },
+        "verifiedBy": { "type": "string", "maxLength": 128 },
+        "verifiedAt": { "type": "string", "format": "date-time" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["paymentId", "orderId", "customerId", "amountKobo", "paymentMethod", "transferReference", "transferDate", "status", "createdAt", "updatedAt"]
+    },
+    "Cart": {
+      "title": "Cart",
+      "description": "Persistent customer shopping cart",
+      "type": "object",
+      "properties": {
+        "cartId": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "customerId": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "items": { "type": "array" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["cartId", "customerId", "items", "createdAt", "updatedAt"]
+    },
+    "Address": {
+      "title": "Address",
+      "description": "Customer saved Nigerian delivery address",
+      "type": "object",
+      "properties": {
+        "addressId": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "customerId": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "fullName": { "type": "string", "minLength": 1, "maxLength": 120 },
+        "phone": { "type": "string", "minLength": 6, "maxLength": 30 },
+        "state": { "type": "string", "minLength": 2, "maxLength": 80 },
+        "lga": { "type": "string", "minLength": 2, "maxLength": 100 },
+        "city": { "type": "string", "minLength": 2, "maxLength": 100 },
+        "streetAddress": { "type": "string", "minLength": 4, "maxLength": 300 },
+        "additionalInstructions": { "type": "string", "maxLength": 400 },
+        "isDefault": { "type": "boolean" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["addressId", "customerId", "fullName", "phone", "state", "lga", "city", "streetAddress", "isDefault", "createdAt", "updatedAt"]
+    },
+    "DeliveryZone": {
+      "title": "DeliveryZone",
+      "description": "Owner-configured Nigerian state and location delivery pricing zone",
+      "type": "object",
+      "properties": {
+        "zoneId": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "name": { "type": "string", "minLength": 1, "maxLength": 120 },
+        "supportedStates": { "type": "array" },
+        "supportedLocations": { "type": "array" },
+        "deliveryFeeKobo": { "type": "integer" },
+        "estimatedDeliveryDays": { "type": "string", "minLength": 1, "maxLength": 80 },
+        "freeDeliveryThresholdKobo": { "type": "integer" },
+        "isActive": { "type": "boolean" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["zoneId", "name", "supportedStates", "supportedLocations", "deliveryFeeKobo", "estimatedDeliveryDays", "isActive", "createdAt", "updatedAt"]
+    },
+    "InventoryLog": {
+      "title": "InventoryLog",
+      "description": "Immutable stock movement audit log",
+      "type": "object",
+      "properties": {
+        "logId": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "productId": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "changeType": { "type": "string", "enum": ["restock", "order_deduction", "order_restoration", "manual_adjustment"] },
+        "quantityChanged": { "type": "integer" },
+        "previousQuantity": { "type": "integer" },
+        "newQuantity": { "type": "integer" },
+        "relatedOrderId": { "type": "string", "maxLength": 128 },
+        "performedBy": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "reason": { "type": "string", "minLength": 1, "maxLength": 400 },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["logId", "productId", "changeType", "quantityChanged", "previousQuantity", "newQuantity", "performedBy", "reason", "createdAt"]
+    },
+    "StoreSetting": {
+      "title": "StoreSetting",
+      "description": "Separated public, bankDetails, private, and emailPreferences store configuration documents",
+      "type": "object",
+      "properties": {
+        "settingId": { "type": "string", "enum": ["public", "bankDetails", "private", "emailPreferences"] },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["settingId", "updatedAt"]
+    },
+    "Review": {
+      "title": "Review",
+      "description": "Moderated verified-purchase product review",
+      "type": "object",
+      "properties": {
+        "reviewId": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "productId": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "orderId": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "customerId": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "customerName": { "type": "string", "minLength": 1, "maxLength": 120 },
+        "rating": { "type": "integer" },
+        "comment": { "type": "string", "minLength": 5, "maxLength": 1500 },
+        "isApproved": { "type": "boolean" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["reviewId", "productId", "orderId", "customerId", "customerName", "rating", "comment", "isApproved", "createdAt", "updatedAt"]
+    },
+    "Notification": {
+      "title": "Notification",
+      "description": "In-app notification for customer or admin",
+      "type": "object",
+      "properties": {
+        "notificationId": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "recipientId": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "type": { "type": "string", "maxLength": 64 },
+        "title": { "type": "string", "minLength": 1, "maxLength": 160 },
+        "message": { "type": "string", "minLength": 1, "maxLength": 600 },
+        "relatedOrderId": { "type": "string", "maxLength": 128 },
+        "isRead": { "type": "boolean" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["notificationId", "recipientId", "type", "title", "message", "isRead", "createdAt"]
+    },
+    "NewsletterSubscriber": {
+      "title": "NewsletterSubscriber",
+      "description": "Email newsletter subscription",
+      "type": "object",
+      "properties": {
+        "subscriberId": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "email": { "type": "string", "format": "email", "maxLength": 180 },
+        "status": { "type": "string", "enum": ["subscribed", "unsubscribed"] },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["subscriberId", "email", "status", "createdAt"]
+    },
+    "AuditLog": {
+      "title": "AuditLog",
+      "description": "Immutable administrative action audit trail",
+      "type": "object",
+      "properties": {
+        "logId": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "actorUid": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "actorEmail": { "type": "string", "maxLength": 180 },
+        "action": { "type": "string", "minLength": 1, "maxLength": 120 },
+        "targetCollection": { "type": "string", "maxLength": 80 },
+        "targetId": { "type": "string", "maxLength": 128 },
+        "details": { "type": "string", "maxLength": 1000 },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["logId", "actorUid", "action", "targetCollection", "targetId", "createdAt"]
+    }
+  },
+  "firestore": {
+    "/users/{uid}": {
+      "schema": { "$ref": "#/entities/User" },
+      "description": "Customer and admin profile documents strictly isolated by owner or admin"
+    },
+    "/admins/{uid}": {
+      "schema": { "$ref": "#/entities/AdminRecord" },
+      "description": "Trusted administrator lookup registry (read/write restricted to admins)"
+    },
+    "/categories/{categoryId}": {
+      "schema": { "$ref": "#/entities/Category" },
+      "description": "Storefront product categories"
+    },
+    "/products/{productId}": {
+      "schema": { "$ref": "#/entities/Product" },
+      "description": "Storefront product catalog with kobo pricing"
+    },
+    "/discounts/{discountId}": {
+      "schema": { "$ref": "#/entities/Discount" },
+      "description": "Active and scheduled product discounts"
+    },
+    "/orders/{orderId}": {
+      "schema": { "$ref": "#/entities/Order" },
+      "description": "Customer orders with unique ORD numbers, snapshot pricing, and independent order/payment/delivery statuses"
+    },
+    "/orderCounters/{dateKey}": {
+      "schema": { "$ref": "#/entities/OrderCounter" },
+      "description": "Daily atomic order sequence counter preventing duplicate order numbers"
+    },
+    "/orderStatusHistory/{historyId}": {
+      "schema": { "$ref": "#/entities/OrderStatusHistory" },
+      "description": "Immutable transition audit trail for every order, payment, and delivery status change"
+    },
+    "/emailNotifications/{notificationId}": {
+      "schema": { "$ref": "#/entities/EmailNotification" },
+      "description": "Transactional email outbox, idempotency eventId, retry counters, and provider delivery statuses"
+    },
+    "/payments/{paymentId}": {
+      "schema": { "$ref": "#/entities/Payment" },
+      "description": "Bank transfer receipts and admin payment verification records"
+    },
+    "/carts/{customerId}": {
+      "schema": { "$ref": "#/entities/Cart" },
+      "description": "Customer persistent shopping carts keyed by customer UID"
+    },
+    "/addresses/{addressId}": {
+      "schema": { "$ref": "#/entities/Address" },
+      "description": "Customer saved Nigerian delivery addresses"
+    },
+    "/deliveryZones/{zoneId}": {
+      "schema": { "$ref": "#/entities/DeliveryZone" },
+      "description": "Owner-configured Nigerian delivery zones and fees"
+    },
+    "/inventoryLogs/{logId}": {
+      "schema": { "$ref": "#/entities/InventoryLog" },
+      "description": "Immutable inventory stock adjustment logs"
+    },
+    "/storeSettings/{settingId}": {
+      "schema": { "$ref": "#/entities/StoreSetting" },
+      "description": "Split public, bankDetails, private, and emailPreferences store configuration documents"
+    },
+    "/reviews/{reviewId}": {
+      "schema": { "$ref": "#/entities/Review" },
+      "description": "Moderated verified-purchase product reviews"
+    },
+    "/notifications/{notificationId}": {
+      "schema": { "$ref": "#/entities/Notification" },
+      "description": "In-app notifications scoped to customer UID or 'admin'"
+    },
+    "/newsletterSubscribers/{subscriberId}": {
+      "schema": { "$ref": "#/entities/NewsletterSubscriber" },
+      "description": "Storefront newsletter subscriber emails"
+    },
+    "/auditLogs/{logId}": {
+      "schema": { "$ref": "#/entities/AuditLog" },
+      "description": "Immutable audit records for admin payment verification and order status actions"
+    }
+  }
+}
