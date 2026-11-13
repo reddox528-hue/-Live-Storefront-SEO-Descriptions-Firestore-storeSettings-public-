@@ -4,6 +4,7 @@ import { Eye, ShoppingBag, Package } from 'lucide-react';
 import { Category, Discount, Product } from '../types/ecommerce';
 import { computeProductPricing, formatNaira } from '../utils/nigerianCurrency';
 import { useStore } from '../context/StoreContext';
+import { resolveImageUrl } from '../utils/imageUrl';
 
 interface ProductCardProps {
   product: Product;
@@ -24,6 +25,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
   const [imgError, setImgError] = useState(false);
   const pricing = computeProductPricing(product, discounts);
   const outOfStock = product.stockQuantity <= 0;
+  const primaryImageUrl = resolveImageUrl(product.images?.[0]);
 
   const handleQuickAdd = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -43,9 +45,9 @@ export const ProductCard: React.FC<ProductCardProps> = ({
         to={`/product/${product.slug}`}
         className="relative aspect-[4/3] w-full bg-zinc-100 overflow-hidden block"
       >
-        {!imgError && product.images?.[0] ? (
+        {!imgError && primaryImageUrl ? (
           <img
-            src={product.images[0]}
+            src={primaryImageUrl}
             alt={product.name}
             loading="lazy"
             referrerPolicy="no-referrer"

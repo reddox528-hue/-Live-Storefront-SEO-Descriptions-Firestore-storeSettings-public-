@@ -25,6 +25,11 @@ import {
   saveCustomerCart,
 } from '../services/storefrontService';
 import { computeProductPricing } from '../utils/nigerianCurrency';
+import {
+  normalizeCategory,
+  normalizeProduct,
+  normalizeStorePublicSettings,
+} from '../utils/imageUrl';
 
 interface ToastMessage {
   id: string;
@@ -136,7 +141,9 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     const unsubSettings = onSnapshot(
       doc(db, 'storeSettings', 'public'),
       (snap) => {
-        if (snap.exists()) setPublicSettings(snap.data() as StorePublicSettings);
+        if (snap.exists()) {
+          setPublicSettings(normalizeStorePublicSettings(snap.data() as StorePublicSettings));
+        }
       },
       () => {}
     );
@@ -146,7 +153,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       (snap) => {
         setCategories(
           snap.docs
-            .map((d) => d.data() as Category)
+            .map((d) => normalizeCategory(d.data() as Category))
             .sort((a, b) => (a.displayOrder ?? 0) - (b.displayOrder ?? 0))
         );
       },
@@ -156,7 +163,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     const unsubProds = onSnapshot(
       query(collection(db, 'products'), where('isPublished', '==', true)),
       (snap) => {
-        setProducts(snap.docs.map((d) => d.data() as Product));
+        setProducts(snap.docs.map((d) => normalizeProduct(d.data() as Product)));
       },
       () => {}
     );

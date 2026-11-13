@@ -14,6 +14,7 @@ import {
 } from '../../services/storefrontService';
 import { uploadFileToStorage } from '../../services/storageService';
 import { useStore } from '../../context/StoreContext';
+import { resolveImageUrl } from '../../utils/imageUrl';
 
 export function AdminProductsPage() {
   const { showToast, refreshStoreData } = useStore();
@@ -107,7 +108,7 @@ export function AdminProductsPage() {
                         <div className="flex items-center gap-3">
                           {p.images[0] && (
                             <img
-                              src={p.images[0]}
+                              src={resolveImageUrl(p.images[0])}
                               alt={p.name}
                               className="w-9 h-9 rounded object-cover bg-slate-100"
                             />
@@ -382,7 +383,7 @@ export function AdminProductFormPage() {
           <div className="flex flex-wrap gap-3">
             {images.map((img, i) => (
               <div key={i} className="relative w-24 h-24 rounded-lg overflow-hidden border border-slate-200">
-                <img src={img} alt="Product" className="w-full h-full object-cover" />
+                <img src={resolveImageUrl(img)} alt="Product" className="w-full h-full object-cover" />
                 <button
                   type="button"
                   onClick={() => setImages((prev) => prev.filter((_, idx) => idx !== i))}
@@ -406,17 +407,17 @@ export function AdminProductFormPage() {
           </div>
           <div className="flex gap-2">
             <input
-              type="url"
+              type="text"
               value={newImageUrl}
               onChange={(e) => setNewImageUrl(e.target.value)}
-              placeholder="Or paste image URL (https://...)"
+              placeholder="Or paste image URL (/images/... or https://...)"
               className="flex-1 px-3 py-2 text-xs border border-slate-300 rounded-lg"
             />
             <button
               type="button"
               onClick={() => {
                 if (newImageUrl.trim()) {
-                  setImages((prev) => [...prev, newImageUrl.trim()]);
+                  setImages((prev) => [...prev, resolveImageUrl(newImageUrl.trim())]);
                   setNewImageUrl('');
                 }
               }}

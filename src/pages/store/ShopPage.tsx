@@ -6,6 +6,8 @@ import { SEOHead } from '../../components/SEOHead';
 import { ProductCard } from '../../components/ProductCard';
 import { useStore } from '../../context/StoreContext';
 import { computeProductPricing, nairaToKobo } from '../../utils/nigerianCurrency';
+import { CATALOG_IMAGES } from '../../assets/catalogImages';
+import { resolveImageUrl } from '../../utils/imageUrl';
 
 const PAGE_SIZE = 12;
 
@@ -137,14 +139,20 @@ export function ShopPage() {
                 </p>
               )}
             </div>
-            <div className="md:col-span-5 h-48 md:h-auto bg-zinc-100">
-              {activeCategory.image && (
-                <img
-                  src={activeCategory.image}
-                  alt={activeCategory.name}
-                  className="w-full h-full object-cover"
-                />
-              )}
+            <div className="md:col-span-5 min-h-[192px] h-48 md:h-auto bg-zinc-100 overflow-hidden">
+              <img
+                src={resolveImageUrl(activeCategory.image, CATALOG_IMAGES.homeCeramics)}
+                alt={activeCategory.name}
+                referrerPolicy="no-referrer"
+                onError={(e) => {
+                  const img = e.currentTarget;
+                  if (!img.dataset.fallbackApplied) {
+                    img.dataset.fallbackApplied = 'true';
+                    img.src = CATALOG_IMAGES.homeCeramics;
+                  }
+                }}
+                className="w-full h-full object-cover"
+              />
             </div>
           </div>
         ) : (

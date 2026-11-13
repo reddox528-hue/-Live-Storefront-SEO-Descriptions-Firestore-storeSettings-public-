@@ -1233,6 +1233,18 @@ export function AdminSettingsPage() {
     }
   };
 
+  const handleHeroImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    try {
+      const url = await uploadFileToStorage(file, 'storefront/banners');
+      setPub((prev) => ({ ...prev, heroImageUrl: url }));
+      showToast('Hero banner image uploaded.');
+    } catch (err: any) {
+      showToast(err?.message || 'Hero image upload failed.', 'error');
+    }
+  };
+
   return (
     <AdminLayout title="Store Settings">
       <form onSubmit={handleSaveAll} className="space-y-8 max-w-4xl">
@@ -1306,10 +1318,10 @@ export function AdminSettingsPage() {
             </label>
             <div className="flex gap-2">
               <input
-                type="url"
+                type="text"
                 value={pub.logoUrl}
                 onChange={(e) => setPub({ ...pub, logoUrl: e.target.value })}
-                placeholder="https://..."
+                placeholder="/images/... or https://..."
                 className="flex-1 px-3 py-2 text-xs border border-slate-300 rounded-lg"
               />
               <label className="px-3 py-2 border border-slate-300 rounded-lg text-xs cursor-pointer inline-flex items-center gap-1">
@@ -1566,6 +1578,25 @@ export function AdminSettingsPage() {
                 onChange={(e) => setPub({ ...pub, seoTitle: e.target.value })}
                 className="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg"
               />
+            </div>
+          </div>
+          <div>
+            <label className="block text-xs font-medium text-slate-700 mb-1">
+              Homepage Hero Image URL / Upload
+            </label>
+            <div className="flex gap-2">
+              <input
+                type="text"
+                value={pub.heroImageUrl}
+                onChange={(e) => setPub({ ...pub, heroImageUrl: e.target.value })}
+                placeholder="/images/hero_modern_commerce_1794563144049.jpg or https://..."
+                className="flex-1 px-3 py-2 text-xs border border-slate-300 rounded-lg font-mono"
+              />
+              <label className="px-3 py-2 border border-slate-300 rounded-lg text-xs cursor-pointer inline-flex items-center gap-1 whitespace-nowrap">
+                <UploadCloud className="w-3.5 h-3.5" />
+                <span>Upload Hero</span>
+                <input type="file" accept="image/*" onChange={handleHeroImageUpload} className="hidden" />
+              </label>
             </div>
           </div>
           <div>

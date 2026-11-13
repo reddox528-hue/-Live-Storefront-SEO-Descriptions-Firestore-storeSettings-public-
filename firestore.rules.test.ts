@@ -30,6 +30,8 @@ import {
   mapBrevoWebhookEventToDeliveryStatus,
   sendBrevoTransactionalEmail,
 } from './functions/src/brevoClient';
+import { resolveImageUrl } from './src/utils/imageUrl';
+import { CATALOG_IMAGES } from './src/assets/catalogImages';
 
 const sampleProduct: Product = {
   productId: 'prod-1',
@@ -418,4 +420,30 @@ test('Codebase has completely removed Resend provider references and never expos
   assert.doesNotMatch(adminPage, /import\.meta\.env\.VITE_.*BREVO/i);
   assert.doesNotMatch(storefrontSvc, /import\.meta\.env\.VITE_.*BREVO/i);
   assert.doesNotMatch(storefrontSvc, /process\.env\.BREVO_API_KEY/i);
+});
+
+test('Image URL resolver maps legacy dev paths, hashed Vite paths, and Drive URLs to valid public image paths', () => {
+  // Verify all catalog image files exist in public/images so both dev and production builds serve them
+  for (const imgPath of Object.values(CATALOG_IMAGES)) {
+    assert.ok(imgPath.startsWith('/images/'));
+    assert.ok(fs.existsSync(path.resolve(`public${imgPath}`)), `Missing public asset: public${imgPath}`);
+  }
+
+  // Legacy dev-seeded path stored in Firestore -> stable public path
+  assert.equal(
+    resolveImageUrl('/src/assets/images/hero_modern_commerce_1794563144049.jpg'),
+    '/images/hero_modern_commerce_1794563144049.jpg'
+  );
+  // Production Vite build-hashed asset path -> stable public path
+  assert.equal(
+    resolveImageUrl('/assets/product_audio_electronics_1794563143753-Bc9X2a1f.jpg'),
+    '/images/product_audio_electronics_1794563143753.jpg'
+  );
+  // Google Drive share link conversion
+  assert.equal(
+    resolveImageUrl('https://drive.google.com/file/d/1AbCdEfGhIjKlMnOp/view?usp=sharing'),
+    'https://lh3.googleusercontent.com/d/1AbCdEfGhIjKlMnOp'
+  );
+  // Fallback when empty
+  assert.equal(resolveImageUrl('', CATALOG_IMAGES.heroModernCommerce), CATALOG_IMAGES.heroModernCommerce);
 });

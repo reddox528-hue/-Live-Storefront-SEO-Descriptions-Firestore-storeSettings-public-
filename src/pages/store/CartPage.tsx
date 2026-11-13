@@ -7,6 +7,8 @@ import { useStore } from '../../context/StoreContext';
 import { computeProductPricing, formatNaira } from '../../utils/nigerianCurrency';
 import { matchDeliveryZone } from '../../services/storefrontService';
 import { NIGERIAN_STATES } from '../../utils/nigeriaLocations';
+import { CATALOG_IMAGES } from '../../assets/catalogImages';
+import { resolveImageUrl } from '../../utils/imageUrl';
 
 export function CartPage() {
   const {
@@ -76,8 +78,16 @@ export function CartPage() {
                         className="w-20 h-20 rounded-xl bg-zinc-100 overflow-hidden shrink-0 border border-zinc-200"
                       >
                         <img
-                          src={product.images[0]}
+                          src={resolveImageUrl(product.images[0], CATALOG_IMAGES.heroModernCommerce)}
                           alt={product.name}
+                          referrerPolicy="no-referrer"
+                          onError={(e) => {
+                            const img = e.currentTarget;
+                            if (!img.dataset.fallbackApplied) {
+                              img.dataset.fallbackApplied = 'true';
+                              img.src = CATALOG_IMAGES.heroModernCommerce;
+                            }
+                          }}
                           className="w-full h-full object-cover"
                         />
                       </Link>

@@ -75,6 +75,12 @@ import {
   buildOrderCancelledEmail,
   EmailTemplateContext,
 } from '../utils/emailTemplates';
+import {
+  normalizeCategory,
+  normalizeProduct,
+  normalizeStorePublicSettings,
+  resolveImageUrl,
+} from '../utils/imageUrl';
 
 const USE_CLOUD_FUNCTIONS = import.meta.env.VITE_USE_CLOUD_FUNCTIONS === 'true';
 
@@ -92,9 +98,9 @@ export async function fetchPublicStoreSettings(): Promise<StorePublicSettings> {
   try {
     const snap = await getDoc(doc(db, 'storeSettings', 'public'));
     if (snap.exists()) {
-      return snap.data() as StorePublicSettings;
+      return normalizeStorePublicSettings(snap.data() as StorePublicSettings);
     }
-    return { ...DEFAULT_PUBLIC_SETTINGS, updatedAt: null };
+    return normalizeStorePublicSettings({ ...DEFAULT_PUBLIC_SETTINGS, updatedAt: null });
   } catch (err) {
     handleFirestoreError(err, OperationType.GET, path);
   }
@@ -131,8 +137,13 @@ export async function savePublicStoreSettings(
 ): Promise<void> {
   const path = 'storeSettings/public';
   try {
-    await setDoc(doc(db, 'storeSettings', 'public'), {
+    const normalized = normalizeStorePublicSettings({
       ...data,
+      settingId: 'public',
+      updatedAt: null,
+    });
+    await setDoc(doc(db, 'storeSettings', 'public'), {
+      ...normalized,
       settingId: 'public',
       updatedAt: serverTimestamp(),
     });
@@ -218,7 +229,7 @@ export async function fetchActiveCategories(): Promise<Category[]> {
     const q = query(collection(db, 'categories'), where('isActive', '==', true));
     const snap = await getDocs(q);
     return snap.docs
-      .map((d) => d.data() as Category)
+      .map((d) => normalizeCategory(d.data() as Category))
       .sort((a, b) => (a.displayOrder ?? 0) - (b.displayOrder ?? 0));
   } catch (err) {
     handleFirestoreError(err, OperationType.LIST, path);
@@ -230,7 +241,7 @@ export async function fetchAllCategoriesAdmin(): Promise<Category[]> {
   try {
     const snap = await getDocs(collection(db, 'categories'));
     return snap.docs
-      .map((d) => d.data() as Category)
+      .map((d) => normalizeCategory(d.data() as Category))
       .sort((a, b) => (a.displayOrder ?? 0) - (b.displayOrder ?? 0));
   } catch (err) {
     handleFirestoreError(err, OperationType.LIST, path);
@@ -244,9 +255,11 @@ export async function upsertCategory(
   const path = `categories/${category.categoryId}`;
   try {
     const ref = doc(db, 'categories', category.categoryId);
+    const cleanImage = resolveImageUrl(category.image, '');
     if (isNew) {
       await setDoc(ref, {
         ...category,
+        image: cleanImage,
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp(),
       });
@@ -256,7 +269,7 @@ export async function upsertCategory(
         name: category.name,
         slug: category.slug,
         description: category.description || '',
-        image: category.image || '',
+        image: cleanImage,
         displayOrder: category.displayOrder,
         isActive: category.isActive,
         createdAt: existing.data()?.createdAt || serverTimestamp(),
@@ -293,7 +306,7 @@ export async function fetchPublishedProducts(): Promise<Product[]> {
   try {
     const q = query(collection(db, 'products'), where('isPublished', '==', true));
     const snap = await getDocs(q);
-    return snap.docs.map((d) => d.data() as Product);
+    return snap.docs.map((d) => normalizeProduct(d.data() as Product));
   } catch (err) {
     handleFirestoreError(err, OperationType.LIST, path);
   }
@@ -303,7 +316,7 @@ export async function fetchAllProductsAdmin(): Promise<Product[]> {
   const path = 'products';
   try {
     const snap = await getDocs(collection(db, 'products'));
-    return snap.docs.map((d) => d.data() as Product);
+    return snap.docs.map((d) => normalizeProduct(d.data() as Product));
   } catch (err) {
     handleFirestoreError(err, OperationType.LIST, path);
   }
@@ -319,7 +332,7 @@ export async function fetchProductBySlug(slug: string): Promise<Product | null> 
       limit(1)
     );
     const snap = await getDocs(q);
-    return snap.empty ? null : (snap.docs[0].data() as Product);
+    return snap.empty ? null : normalizeProduct(snap.docs[0].data() as Product);
   } catch (err) {
     handleFirestoreError(err, OperationType.LIST, path);
   }
@@ -329,7 +342,7 @@ export async function fetchProductByIdAdmin(productId: string): Promise<Product 
   const path = `products/${productId}`;
   try {
     const snap = await getDoc(doc(db, 'products', productId));
-    return snap.exists() ? (snap.data() as Product) : null;
+    return snap.exists() ? normalizeProduct(snap.data() as Product) : null;
   } catch (err) {
     handleFirestoreError(err, OperationType.GET, path);
   }
@@ -342,9 +355,11 @@ export async function upsertProduct(
   const path = `products/${product.productId}`;
   try {
     const ref = doc(db, 'products', product.productId);
+    const cleanImages = (product.images || []).map((img) => resolveImageUrl(img)).filter(Boolean);
     if (isNew) {
       await setDoc(ref, {
         ...product,
+        images: cleanImages,
         salesCount: product.salesCount ?? 0,
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp(),
@@ -353,6 +368,7 @@ export async function upsertProduct(
       const existing = await getDoc(ref);
       await setDoc(ref, {
         ...product,
+        images: cleanImages,
         salesCount: existing.data()?.salesCount ?? product.salesCount ?? 0,
         createdAt: existing.data()?.createdAt || serverTimestamp(),
         updatedAt: serverTimestamp(),

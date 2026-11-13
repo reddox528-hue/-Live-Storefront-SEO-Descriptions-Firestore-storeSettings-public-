@@ -164,10 +164,10 @@ export function AdminCategoriesPage() {
             <label className="block text-xs font-medium text-slate-700 mb-1">Image URL or Upload</label>
             <div className="flex gap-2">
               <input
-                type="url"
+                type="text"
                 value={image}
                 onChange={(e) => setImage(e.target.value)}
-                placeholder="https://..."
+                placeholder="/images/... or https://..."
                 className="flex-1 px-3 py-2 text-xs border border-slate-300 rounded-lg"
               />
               <label className="px-3 py-2 border border-slate-300 rounded-lg text-xs cursor-pointer inline-flex items-center gap-1 hover:bg-slate-50">

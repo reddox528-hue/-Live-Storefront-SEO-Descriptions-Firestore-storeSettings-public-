@@ -14,6 +14,8 @@ import {
   fetchProductBySlug,
   submitProductReview,
 } from '../../services/storefrontService';
+import { CATALOG_IMAGES } from '../../assets/catalogImages';
+import { resolveImageUrl } from '../../utils/imageUrl';
 
 export function ProductDetailsPage() {
   const { slug } = useParams<{ slug: string }>();
@@ -213,9 +215,19 @@ export function ProductDetailsPage() {
           <div className="lg:col-span-7 space-y-4">
             <div className="aspect-[4/3] bg-zinc-100 rounded-2xl overflow-hidden border border-zinc-200/80">
               <img
-                src={product.images[activeImgIdx] || product.images[0]}
+                src={resolveImageUrl(
+                  product.images[activeImgIdx] || product.images[0],
+                  CATALOG_IMAGES.heroModernCommerce
+                )}
                 alt={product.name}
                 referrerPolicy="no-referrer"
+                onError={(e) => {
+                  const img = e.currentTarget;
+                  if (!img.dataset.fallbackApplied) {
+                    img.dataset.fallbackApplied = 'true';
+                    img.src = CATALOG_IMAGES.heroModernCommerce;
+                  }
+                }}
                 className="w-full h-full object-cover"
               />
             </div>
@@ -231,8 +243,9 @@ export function ProductDetailsPage() {
                     }`}
                   >
                     <img
-                      src={img}
+                      src={resolveImageUrl(img, CATALOG_IMAGES.heroModernCommerce)}
                       alt={`${product.name} view ${idx + 1}`}
+                      referrerPolicy="no-referrer"
                       className="w-full h-full object-cover"
                     />
                   </button>

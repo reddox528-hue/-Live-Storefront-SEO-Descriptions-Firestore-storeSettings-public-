@@ -18,6 +18,8 @@ import { Product } from '../../types/ecommerce';
 import { computeProductPricing, formatNaira } from '../../utils/nigerianCurrency';
 import { subscribeNewsletter } from '../../services/storefrontService';
 import { seedInitialStorefrontCatalog } from '../../services/seedService';
+import { CATALOG_IMAGES } from '../../assets/catalogImages';
+import { resolveImageUrl } from '../../utils/imageUrl';
 
 export function HomePage() {
   const {
@@ -151,15 +153,20 @@ export function HomePage() {
             </div>
           </div>
 
-          <div className="lg:col-span-6 min-h-[300px] lg:min-h-[460px] bg-zinc-100 relative">
-            {publicSettings.heroImageUrl && (
-              <img
-                src={publicSettings.heroImageUrl}
-                alt={publicSettings.heroTitle}
-                referrerPolicy="no-referrer"
-                className="w-full h-full object-cover"
-              />
-            )}
+          <div className="lg:col-span-6 min-h-[300px] lg:min-h-[460px] aspect-[16/10] lg:aspect-auto bg-zinc-100 relative overflow-hidden">
+            <img
+              src={resolveImageUrl(publicSettings.heroImageUrl, CATALOG_IMAGES.heroModernCommerce)}
+              alt={publicSettings.heroTitle || publicSettings.storeName}
+              referrerPolicy="no-referrer"
+              onError={(e) => {
+                const img = e.currentTarget;
+                if (!img.dataset.fallbackApplied) {
+                  img.dataset.fallbackApplied = 'true';
+                  img.src = CATALOG_IMAGES.heroModernCommerce;
+                }
+              }}
+              className="w-full h-full object-cover"
+            />
           </div>
         </div>
 
@@ -265,15 +272,20 @@ export function HomePage() {
                 className="group bg-white border border-zinc-200/80 rounded-xl overflow-hidden hover:-translate-y-0.5 hover:shadow-md transition-all duration-200"
               >
                 <div className="aspect-[4/3] bg-zinc-100 overflow-hidden">
-                  {cat.image && (
-                    <img
-                      src={cat.image}
-                      alt={cat.name}
-                      loading="lazy"
-                      referrerPolicy="no-referrer"
-                      className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-[1.03]"
-                    />
-                  )}
+                  <img
+                    src={resolveImageUrl(cat.image, CATALOG_IMAGES.homeCeramics)}
+                    alt={cat.name}
+                    loading="lazy"
+                    referrerPolicy="no-referrer"
+                    onError={(e) => {
+                      const img = e.currentTarget;
+                      if (!img.dataset.fallbackApplied) {
+                        img.dataset.fallbackApplied = 'true';
+                        img.src = CATALOG_IMAGES.homeCeramics;
+                      }
+                    }}
+                    className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-[1.03]"
+                  />
                 </div>
                 <div className="p-4">
                   <h3 className="font-display font-semibold text-base text-zinc-900 group-hover:text-[#065F46]">
@@ -417,16 +429,21 @@ export function HomePage() {
                 </Link>
               </div>
             </div>
-            <div className="lg:col-span-5 min-h-[240px] bg-zinc-800">
-              {activePromo.image && (
-                <img
-                  src={activePromo.image}
-                  alt={activePromo.title}
-                  loading="lazy"
-                  referrerPolicy="no-referrer"
-                  className="w-full h-full object-cover"
-                />
-              )}
+            <div className="lg:col-span-5 min-h-[240px] aspect-[16/10] lg:aspect-auto bg-zinc-800 relative overflow-hidden">
+              <img
+                src={resolveImageUrl(activePromo.image, CATALOG_IMAGES.homeCeramics)}
+                alt={activePromo.title}
+                loading="lazy"
+                referrerPolicy="no-referrer"
+                onError={(e) => {
+                  const img = e.currentTarget;
+                  if (!img.dataset.fallbackApplied) {
+                    img.dataset.fallbackApplied = 'true';
+                    img.src = CATALOG_IMAGES.homeCeramics;
+                  }
+                }}
+                className="w-full h-full object-cover"
+              />
             </div>
           </div>
         </section>
@@ -511,10 +528,18 @@ export function HomePage() {
           className="fixed inset-0 z-50 bg-black/50 backdrop-blur-xs flex items-center justify-center p-4"
         >
           <div className="bg-white rounded-2xl max-w-2xl w-full overflow-hidden border border-zinc-200 shadow-xl grid grid-cols-1 md:grid-cols-2">
-            <div className="aspect-square bg-zinc-100">
+            <div className="aspect-square bg-zinc-100 overflow-hidden">
               <img
-                src={quickViewProduct.images[0]}
+                src={resolveImageUrl(quickViewProduct.images?.[0], CATALOG_IMAGES.heroModernCommerce)}
                 alt={quickViewProduct.name}
+                referrerPolicy="no-referrer"
+                onError={(e) => {
+                  const img = e.currentTarget;
+                  if (!img.dataset.fallbackApplied) {
+                    img.dataset.fallbackApplied = 'true';
+                    img.src = CATALOG_IMAGES.heroModernCommerce;
+                  }
+                }}
                 className="w-full h-full object-cover"
               />
             </div>
