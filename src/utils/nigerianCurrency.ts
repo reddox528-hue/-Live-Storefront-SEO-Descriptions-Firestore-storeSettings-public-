@@ -171,6 +171,7 @@ export const EMAIL_TYPE_LABELS: Record<string, string> = {
   order_delivered: 'Delivered & Review Request',
   order_cancelled: 'Order Cancelled',
   refund_confirmed: 'Refund Confirmed',
+  new_customer: 'New Customer Registered',
   test_email: 'Admin Test Email',
 };
 

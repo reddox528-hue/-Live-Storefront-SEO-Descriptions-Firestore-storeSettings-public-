@@ -779,13 +779,13 @@ export function AdminNotificationsPage() {
               </div>
               <div className="bg-white border border-slate-200 rounded-xl p-4">
                 <p className="text-[11px] font-semibold uppercase tracking-wider text-[#065F46]">
-                  Sent via Provider
+                  Sent (Accepted by Brevo)
                 </p>
                 <p className="font-mono text-2xl font-bold text-[#065F46] mt-1">{emailStats.sent}</p>
               </div>
               <div className="bg-white border border-slate-200 rounded-xl p-4">
                 <p className="text-[11px] font-semibold uppercase tracking-wider text-amber-700">
-                  Queued
+                  Pending / Queued
                 </p>
                 <p className="font-mono text-2xl font-bold text-amber-700 mt-1">
                   {emailStats.queued}
@@ -815,7 +815,7 @@ export function AdminNotificationsPage() {
                 >
                   <option value="all">All Delivery States</option>
                   <option value="sent">Sent</option>
-                  <option value="queued">Queued</option>
+                  <option value="queued">Pending / Queued</option>
                   <option value="failed">Failed</option>
                 </select>
               </div>
@@ -899,11 +899,13 @@ export function AdminNotificationsPage() {
                               ) : (
                                 <XCircle className="w-3 h-3" />
                               )}
-                              <span>{rec.status.toUpperCase()}</span>
+                              <span>
+                                {rec.status === 'queued' ? 'PENDING' : rec.status.toUpperCase()}
+                              </span>
                             </span>
                             {rec.deliveryStatus && (
                               <p className="text-[11px] text-slate-500 mt-1">
-                                Webhook: {rec.deliveryStatus.replace(/_/g, ' ')} · Attempts:{' '}
+                                Delivery: {rec.deliveryStatus.replace(/_/g, ' ')} · Attempts:{' '}
                                 {rec.attemptCount || 0}
                               </p>
                             )}
@@ -1058,14 +1060,19 @@ const EMAIL_EVENT_TOGGLES: Array<{
   description: string;
 }> = [
   {
+    key: 'newCustomerAdmin',
+    label: '0. New Customer Registered (Admin Gmail)',
+    description: 'Sends an alert to admin email whenever a new customer creates an account.',
+  },
+  {
     key: 'orderPlacedCustomer',
     label: 'A. New Order Placed (Customer)',
     description: 'Sends order confirmation, items, NGN breakdown, and bank instructions on checkout.',
   },
   {
     key: 'orderPlacedAdmin',
-    label: 'A. New Order Received (Admin)',
-    description: 'Alerts admin email immediately with customer details and direct dashboard link.',
+    label: 'A. New Order Received (Admin Gmail)',
+    description: 'Alerts admin email immediately with customer details, NGN total, and dashboard link.',
   },
   {
     key: 'orderPendingNotice',
@@ -1079,7 +1086,7 @@ const EMAIL_EVENT_TOGGLES: Array<{
   },
   {
     key: 'orderReceivedAdmin',
-    label: 'C. Order Received Confirmation (Admin)',
+    label: 'C. Order Received Confirmation (Admin Gmail)',
     description: 'Logs confirmation to admin email when an order is marked Received.',
   },
   {
@@ -1089,8 +1096,8 @@ const EMAIL_EVENT_TOGGLES: Array<{
   },
   {
     key: 'paymentSubmittedAdmin',
-    label: 'D. Payment Submitted Alert (Admin)',
-    description: 'Notifies admin to verify bank transfer proof.',
+    label: 'D. Payment Submitted Alert (Admin Gmail)',
+    description: 'Notifies admin with amount, transfer reference, and payment review link.',
   },
   {
     key: 'paymentVerifiedCustomer',
@@ -1099,7 +1106,7 @@ const EMAIL_EVENT_TOGGLES: Array<{
   },
   {
     key: 'paymentVerifiedAdmin',
-    label: 'E. Payment Verified Log (Admin)',
+    label: 'E. Payment Verified Log (Admin Gmail)',
     description: 'Notifies admin email after a payment is confirmed Paid.',
   },
   {
@@ -1109,8 +1116,8 @@ const EMAIL_EVENT_TOGGLES: Array<{
   },
   {
     key: 'paymentRejectedAdmin',
-    label: 'F. Payment Rejected Log (Admin)',
-    description: 'Copies rejection record to admin email.',
+    label: 'F. Payment Rejected Log (Admin Gmail)',
+    description: 'Copies rejection record and reason to admin email.',
   },
   {
     key: 'orderProcessingCustomer',
@@ -1118,9 +1125,19 @@ const EMAIL_EVENT_TOGGLES: Array<{
     description: 'Sent when order moves to Processing.',
   },
   {
+    key: 'orderProcessingAdmin',
+    label: 'G. Order Processing Log (Admin Gmail)',
+    description: 'Notifies admin email when an order moves to Processing.',
+  },
+  {
     key: 'readyForDispatchCustomer',
     label: 'H. Ready for Dispatch (Customer)',
     description: 'Sent when order is packed and ready for courier pickup.',
+  },
+  {
+    key: 'readyForDispatchAdmin',
+    label: 'H. Ready for Dispatch Log (Admin Gmail)',
+    description: 'Notifies admin email when an order is Ready for Dispatch.',
   },
   {
     key: 'outForDeliveryCustomer',
@@ -1128,9 +1145,19 @@ const EMAIL_EVENT_TOGGLES: Array<{
     description: 'Includes rider name and tracking notes when dispatched.',
   },
   {
+    key: 'outForDeliveryAdmin',
+    label: 'I. Out for Delivery Log (Admin Gmail)',
+    description: 'Notifies admin email with dispatch rider details when Out for Delivery.',
+  },
+  {
     key: 'deliveredCustomer',
     label: 'J. Order Delivered (Customer)',
     description: 'Confirms delivery and invites a verified purchase review.',
+  },
+  {
+    key: 'deliveredAdmin',
+    label: 'J. Order Delivered Log (Admin Gmail)',
+    description: 'Notifies admin email when an order is marked Delivered.',
   },
   {
     key: 'orderCancelledCustomer',
@@ -1139,13 +1166,18 @@ const EMAIL_EVENT_TOGGLES: Array<{
   },
   {
     key: 'orderCancelledAdmin',
-    label: 'K. Order Cancelled Log (Admin)',
+    label: 'K. Order Cancelled Log (Admin Gmail)',
     description: 'Sends cancellation record to admin notification email.',
   },
   {
     key: 'refundConfirmedCustomer',
     label: 'L. Refund Confirmed (Customer)',
     description: 'Sent when admin records a confirmed refund on a Paid order.',
+  },
+  {
+    key: 'refundConfirmedAdmin',
+    label: 'L. Refund Confirmed Log (Admin Gmail)',
+    description: 'Sends audit confirmation to admin email when a refund is confirmed.',
   },
 ];
 
@@ -1164,6 +1196,13 @@ export function AdminSettingsPage() {
     providerMessageId?: string;
     failureReason?: string;
   } | null>(null);
+  const [serverEmailHealth, setServerEmailHealth] = useState<{
+    brevoApiKeyConfigured?: boolean;
+    brevoFromEmailConfigured?: boolean;
+    adminNotificationEmail?: string;
+    appUrlConfigured?: boolean;
+    adminSdkReady?: boolean;
+  } | null>(null);
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
@@ -1176,9 +1215,23 @@ export function AdminSettingsPage() {
       setPub(p);
       setBank(b);
       setPriv(pr);
-      setEmailPrefs(ep);
+      setEmailPrefs({
+        ...DEFAULT_EMAIL_PREFERENCES,
+        ...ep,
+        events: {
+          ...DEFAULT_EMAIL_PREFERENCES.events,
+          ...(ep.events || {}),
+        },
+      });
       setTestRecipient(ep.adminNotificationEmail || DEFAULT_EMAIL_PREFERENCES.adminNotificationEmail);
     });
+
+    fetch('/api/health')
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (data) setServerEmailHealth(data);
+      })
+      .catch(() => {});
   }, []);
 
   const handleSaveAll = async (e: React.FormEvent) => {
@@ -1421,9 +1474,12 @@ export function AdminSettingsPage() {
                 onChange={(e) =>
                   setEmailPrefs({ ...emailPrefs, adminNotificationEmail: e.target.value })
                 }
-                placeholder="orders-admin@koramarket.ng"
+                placeholder="reddox528@gmail.com"
                 className="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg"
               />
+              <p className="text-[11px] text-slate-500 mt-1">
+                Default administrator Gmail inbox: <span className="font-mono">reddox528@gmail.com</span>
+              </p>
             </div>
             <div>
               <label className="block text-xs font-medium text-slate-700 mb-1">Sender Name</label>
@@ -1459,6 +1515,48 @@ export function AdminSettingsPage() {
             </div>
           </div>
 
+          {serverEmailHealth && (
+            <div className="rounded-lg border border-slate-200 bg-slate-50 p-3 text-xs space-y-1">
+              <p className="font-semibold text-slate-800">
+                Server Brevo Runtime Readiness (No Secrets Exposed)
+              </p>
+              <div className="flex flex-wrap gap-x-4 gap-y-1 text-slate-600">
+                <span>
+                  BREVO_API_KEY:{' '}
+                  <strong
+                    className={
+                      serverEmailHealth.brevoApiKeyConfigured ? 'text-[#065F46]' : 'text-amber-700'
+                    }
+                  >
+                    {serverEmailHealth.brevoApiKeyConfigured ? 'Configured' : 'Missing in Server Env'}
+                  </strong>
+                </span>
+                <span>
+                  Verified Sender (BREVO_FROM_EMAIL / Settings):{' '}
+                  <strong
+                    className={
+                      serverEmailHealth.brevoFromEmailConfigured || Boolean(emailPrefs.senderEmail)
+                        ? 'text-[#065F46]'
+                        : 'text-amber-700'
+                    }
+                  >
+                    {serverEmailHealth.brevoFromEmailConfigured || Boolean(emailPrefs.senderEmail)
+                      ? 'Configured'
+                      : 'Needs Verified Sender'}
+                  </strong>
+                </span>
+                <span>
+                  Admin SDK:{' '}
+                  <strong
+                    className={serverEmailHealth.adminSdkReady ? 'text-[#065F46]' : 'text-amber-700'}
+                  >
+                    {serverEmailHealth.adminSdkReady ? 'Ready' : 'Inactive'}
+                  </strong>
+                </span>
+              </div>
+            </div>
+          )}
+
           <div className="border-t border-slate-100 pt-4 space-y-3">
             <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-600">
               Notification Event Triggers
@@ -1471,7 +1569,7 @@ export function AdminSettingsPage() {
                 >
                   <input
                     type="checkbox"
-                    checked={emailPrefs.events[item.key]}
+                    checked={Boolean(emailPrefs.events[item.key])}
                     onChange={(e) =>
                       setEmailPrefs({
                         ...emailPrefs,

@@ -6,11 +6,14 @@ import { initializeApp } from 'firebase-admin/app';
 import { getAuth } from 'firebase-admin/auth';
 import { getFirestore, FieldValue, Timestamp, Transaction } from 'firebase-admin/firestore';
 import {
+  buildAdminNewCustomerEmail,
   buildAdminNewOrderEmail,
   buildAdminOrderReceivedEmail,
   buildAdminPaymentRejectedEmail,
   buildAdminPaymentSubmittedEmail,
   buildAdminPaymentVerifiedEmail,
+  buildAdminRefundConfirmedEmail,
+  buildAdminStatusStageEmail,
   buildCustomerOrderPlacedEmail,
   buildCustomerOrderReceivedEmail,
   buildCustomerPaymentRejectedEmail,
@@ -1445,54 +1448,118 @@ export const updateOrderStatus = onCall(async (request) => {
             htmlBody: mail.html,
           });
         }
-      } else if (targetOrderStatus === 'processing' && events.orderProcessingCustomer !== false) {
-        const mail = buildCustomerStatusStageEmail(ctx, 'order_processing');
-        await queueEmailNotificationIdempotent({
-          eventId: `${orderId}:order_processing:${transitionHistoryId}`,
-          orderId,
-          orderNumber: ctx.orderNumber,
-          recipient: ctx.customerEmail,
-          recipientType: 'customer',
-          notificationType: 'order_processing',
-          subject: mail.subject,
-          htmlBody: mail.html,
-        });
-      } else if (targetOrderStatus === 'ready_for_dispatch' && events.readyForDispatchCustomer !== false) {
-        const mail = buildCustomerStatusStageEmail(ctx, 'ready_for_dispatch');
-        await queueEmailNotificationIdempotent({
-          eventId: `${orderId}:ready_for_dispatch:${transitionHistoryId}`,
-          orderId,
-          orderNumber: ctx.orderNumber,
-          recipient: ctx.customerEmail,
-          recipientType: 'customer',
-          notificationType: 'ready_for_dispatch',
-          subject: mail.subject,
-          htmlBody: mail.html,
-        });
-      } else if (targetOrderStatus === 'out_for_delivery' && events.outForDeliveryCustomer !== false) {
-        const mail = buildCustomerStatusStageEmail(ctx, 'out_for_delivery');
-        await queueEmailNotificationIdempotent({
-          eventId: `${orderId}:out_for_delivery:${transitionHistoryId}`,
-          orderId,
-          orderNumber: ctx.orderNumber,
-          recipient: ctx.customerEmail,
-          recipientType: 'customer',
-          notificationType: 'out_for_delivery',
-          subject: mail.subject,
-          htmlBody: mail.html,
-        });
-      } else if (targetOrderStatus === 'delivered' && events.deliveredCustomer !== false) {
-        const mail = buildCustomerStatusStageEmail(ctx, 'order_delivered');
-        await queueEmailNotificationIdempotent({
-          eventId: `${orderId}:order_delivered:${transitionHistoryId}`,
-          orderId,
-          orderNumber: ctx.orderNumber,
-          recipient: ctx.customerEmail,
-          recipientType: 'customer',
-          notificationType: 'order_delivered',
-          subject: mail.subject,
-          htmlBody: mail.html,
-        });
+      } else if (targetOrderStatus === 'processing') {
+        if (events.orderProcessingCustomer !== false && isValidEmail(ctx.customerEmail)) {
+          const mail = buildCustomerStatusStageEmail(ctx, 'order_processing');
+          await queueEmailNotificationIdempotent({
+            eventId: `${orderId}:order_processing:${transitionHistoryId}:customer`,
+            orderId,
+            orderNumber: ctx.orderNumber,
+            recipient: ctx.customerEmail,
+            recipientType: 'customer',
+            notificationType: 'order_processing',
+            subject: mail.subject,
+            htmlBody: mail.html,
+          });
+        }
+        if (events.orderProcessingAdmin !== false) {
+          const adminEmail = resolveAdminNotificationEmail(emailPrefs);
+          const mail = buildAdminStatusStageEmail(ctx, 'order_processing');
+          await queueEmailNotificationIdempotent({
+            eventId: `${orderId}:order_processing:${transitionHistoryId}:admin`,
+            orderId,
+            orderNumber: ctx.orderNumber,
+            recipient: adminEmail,
+            recipientType: 'admin',
+            notificationType: 'order_processing',
+            subject: mail.subject,
+            htmlBody: mail.html,
+          });
+        }
+      } else if (targetOrderStatus === 'ready_for_dispatch') {
+        if (events.readyForDispatchCustomer !== false && isValidEmail(ctx.customerEmail)) {
+          const mail = buildCustomerStatusStageEmail(ctx, 'ready_for_dispatch');
+          await queueEmailNotificationIdempotent({
+            eventId: `${orderId}:ready_for_dispatch:${transitionHistoryId}:customer`,
+            orderId,
+            orderNumber: ctx.orderNumber,
+            recipient: ctx.customerEmail,
+            recipientType: 'customer',
+            notificationType: 'ready_for_dispatch',
+            subject: mail.subject,
+            htmlBody: mail.html,
+          });
+        }
+        if (events.readyForDispatchAdmin !== false) {
+          const adminEmail = resolveAdminNotificationEmail(emailPrefs);
+          const mail = buildAdminStatusStageEmail(ctx, 'ready_for_dispatch');
+          await queueEmailNotificationIdempotent({
+            eventId: `${orderId}:ready_for_dispatch:${transitionHistoryId}:admin`,
+            orderId,
+            orderNumber: ctx.orderNumber,
+            recipient: adminEmail,
+            recipientType: 'admin',
+            notificationType: 'ready_for_dispatch',
+            subject: mail.subject,
+            htmlBody: mail.html,
+          });
+        }
+      } else if (targetOrderStatus === 'out_for_delivery') {
+        if (events.outForDeliveryCustomer !== false && isValidEmail(ctx.customerEmail)) {
+          const mail = buildCustomerStatusStageEmail(ctx, 'out_for_delivery');
+          await queueEmailNotificationIdempotent({
+            eventId: `${orderId}:out_for_delivery:${transitionHistoryId}:customer`,
+            orderId,
+            orderNumber: ctx.orderNumber,
+            recipient: ctx.customerEmail,
+            recipientType: 'customer',
+            notificationType: 'out_for_delivery',
+            subject: mail.subject,
+            htmlBody: mail.html,
+          });
+        }
+        if (events.outForDeliveryAdmin !== false) {
+          const adminEmail = resolveAdminNotificationEmail(emailPrefs);
+          const mail = buildAdminStatusStageEmail(ctx, 'out_for_delivery');
+          await queueEmailNotificationIdempotent({
+            eventId: `${orderId}:out_for_delivery:${transitionHistoryId}:admin`,
+            orderId,
+            orderNumber: ctx.orderNumber,
+            recipient: adminEmail,
+            recipientType: 'admin',
+            notificationType: 'out_for_delivery',
+            subject: mail.subject,
+            htmlBody: mail.html,
+          });
+        }
+      } else if (targetOrderStatus === 'delivered') {
+        if (events.deliveredCustomer !== false && isValidEmail(ctx.customerEmail)) {
+          const mail = buildCustomerStatusStageEmail(ctx, 'order_delivered');
+          await queueEmailNotificationIdempotent({
+            eventId: `${orderId}:order_delivered:${transitionHistoryId}:customer`,
+            orderId,
+            orderNumber: ctx.orderNumber,
+            recipient: ctx.customerEmail,
+            recipientType: 'customer',
+            notificationType: 'order_delivered',
+            subject: mail.subject,
+            htmlBody: mail.html,
+          });
+        }
+        if (events.deliveredAdmin !== false) {
+          const adminEmail = resolveAdminNotificationEmail(emailPrefs);
+          const mail = buildAdminStatusStageEmail(ctx, 'order_delivered');
+          await queueEmailNotificationIdempotent({
+            eventId: `${orderId}:order_delivered:${transitionHistoryId}:admin`,
+            orderId,
+            orderNumber: ctx.orderNumber,
+            recipient: adminEmail,
+            recipientType: 'admin',
+            notificationType: 'order_delivered',
+            subject: mail.subject,
+            htmlBody: mail.html,
+          });
+        }
       } else if (targetOrderStatus === 'cancelled') {
         if (events.orderCancelledCustomer !== false && isValidEmail(ctx.customerEmail)) {
           const mail = buildOrderCancelledEmail(ctx, 'customer');
@@ -1611,6 +1678,20 @@ export const recordRefundConfirmed = onCall(async (request) => {
           orderNumber: ctx.orderNumber,
           recipient: ctx.customerEmail,
           recipientType: 'customer',
+          notificationType: 'refund_confirmed',
+          subject: mail.subject,
+          htmlBody: mail.html,
+        });
+      }
+      if (emailPrefs.events?.refundConfirmedAdmin !== false) {
+        const adminEmail = resolveAdminNotificationEmail(emailPrefs);
+        const mail = buildAdminRefundConfirmedEmail(ctx);
+        await queueEmailNotificationIdempotent({
+          eventId: `${orderId}:refund_confirmed:admin`,
+          orderId,
+          orderNumber: ctx.orderNumber,
+          recipient: adminEmail,
+          recipientType: 'admin',
           notificationType: 'refund_confirmed',
           subject: mail.subject,
           htmlBody: mail.html,
@@ -1885,3 +1966,58 @@ export const brevoWebhook = onRequest(async (req, res) => {
 
   res.json({ ok: true, updated: updatedCount });
 });
+
+/**
+ * 12. New Customer Account Created -> Admin Gmail Notification (Idempotent)
+ */
+export const onNewCustomerCreated = onDocumentCreated(
+  {
+    document: 'users/{uid}',
+    database: DATABASE_ID,
+  },
+  async (event) => {
+    const snap = event.data;
+    if (!snap) return;
+    const userData = snap.data();
+    if (!userData || userData.role === 'admin') return;
+
+    const [pubSnap, emailPrefSnap] = await Promise.all([
+      db.collection('storeSettings').doc('public').get(),
+      db.collection('storeSettings').doc('emailPreferences').get(),
+    ]);
+    const pub = pubSnap.exists ? pubSnap.data()! : {};
+    const emailPrefs = emailPrefSnap.exists ? emailPrefSnap.data()! : {};
+    if (emailPrefs.emailsEnabled === false || emailPrefs.events?.newCustomerAdmin === false) {
+      return;
+    }
+
+    const adminEmail = resolveAdminNotificationEmail(emailPrefs);
+    const mail = buildAdminNewCustomerEmail({
+      storeName:
+        pub.storeName || emailPrefs.senderName || process.env.BREVO_FROM_NAME || 'KoraMarket Nigeria',
+      logoUrl: pub.logoUrl || '',
+      contactEmail: pub.contactEmail || '',
+      phoneNumber: pub.phoneNumber || '',
+      businessAddress: pub.businessAddress || '',
+      primaryColor: '#065F46',
+      appUrl: process.env.APP_URL || 'https://koramarket.ng',
+      customerId: snap.id,
+      customerName: String(userData.fullName || 'Customer'),
+      customerEmail: String(userData.email || ''),
+      customerPhone: String(userData.phone || ''),
+      timestampWat: formatLagosWat(),
+    });
+
+    await queueEmailNotificationIdempotent({
+      eventId: `user:${snap.id}:new_customer:admin`,
+      orderId: '',
+      orderNumber: 'NEW-CUSTOMER',
+      recipient: adminEmail,
+      recipientType: 'admin',
+      notificationType: 'new_customer',
+      subject: mail.subject,
+      htmlBody: mail.html,
+    });
+  }
+);
+

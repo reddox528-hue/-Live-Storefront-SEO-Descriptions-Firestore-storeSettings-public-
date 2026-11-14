@@ -2,10 +2,16 @@ import React, { createContext, useContext, useEffect, useState, useCallback } fr
 import {
   User as FirebaseUser,
   GoogleAuthProvider,
+  browserLocalPersistence,
+  setPersistence,
   signInWithPopup,
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
   sendPasswordResetEmail,
+  verifyPasswordResetCode,
+  confirmPasswordReset,
+  applyActionCode,
+  ActionCodeSettings,
   sendEmailVerification,
   updateProfile,
   updatePassword,
@@ -17,6 +23,8 @@ import {
 import { doc, getDoc, setDoc, updateDoc, serverTimestamp } from 'firebase/firestore';
 import { auth, db, BOOTSTRAP_ADMIN_EMAIL, handleFirestoreError, OperationType } from '../firebase';
 import { UserProfile } from '../types/ecommerce';
+import { validateEmailFormat } from '../utils/authErrors';
+import { notifyNewCustomerAccount } from '../services/storefrontService';
 
 interface AuthContextValue {
   firebaseUser: FirebaseUser | null;
@@ -27,6 +35,9 @@ interface AuthContextValue {
   loginWithEmail: (email: string, password: string) => Promise<void>;
   registerWithEmail: (fullName: string, phone: string, email: string, password: string) => Promise<void>;
   sendPasswordReset: (email: string) => Promise<void>;
+  verifyResetCode: (actionCode: string) => Promise<string>;
+  completePasswordReset: (actionCode: string, newPassword: string) => Promise<void>;
+  verifyEmailActionCode: (actionCode: string) => Promise<void>;
   resendVerificationEmail: () => Promise<void>;
   refreshAuthUser: () => Promise<boolean>;
   updateCustomerProfile: (fullName: string, phone: string) => Promise<void>;
@@ -102,6 +113,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         sessionStorage.removeItem('koramarket_pending_phone');
         const createdSnap = await getDoc(userRef);
         setUserProfile(createdSnap.exists() ? (createdSnap.data() as UserProfile) : (newProfile as UserProfile));
+        void notifyNewCustomerAccount();
       }
     } catch (err) {
       console.error('Error syncing user profile:', err);
@@ -109,6 +121,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   useEffect(() => {
+    setPersistence(auth, browserLocalPersistence).catch(() => {});
     const unsub = onAuthStateChanged(auth, async (user) => {
       setFirebaseUser(user);
       await syncUserAndRole(user);
@@ -143,7 +156,43 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const sendPasswordReset = async (email: string) => {
-    await sendPasswordResetEmail(auth, email.trim());
+    const trimmed = email.trim();
+    if (!validateEmailFormat(trimmed)) {
+      const err = new Error('Please enter a valid email address.') as Error & { code?: string };
+      err.code = 'auth/invalid-email';
+      throw err;
+    }
+    const actionCodeSettings: ActionCodeSettings = {
+      url: `${window.location.origin}/login`,
+      handleCodeInApp: false,
+    };
+    try {
+      await sendPasswordResetEmail(auth, trimmed, actionCodeSettings);
+    } catch (err: any) {
+      // Prevent account enumeration while still surfacing real configuration/rate-limit errors
+      if (err?.code === 'auth/user-not-found') {
+        return;
+      }
+      throw err;
+    }
+  };
+
+  const verifyResetCode = async (actionCode: string): Promise<string> => {
+    return verifyPasswordResetCode(auth, actionCode);
+  };
+
+  const completePasswordReset = async (actionCode: string, newPassword: string) => {
+    await confirmPasswordReset(auth, actionCode, newPassword);
+  };
+
+  const verifyEmailActionCode = async (actionCode: string) => {
+    await applyActionCode(auth, actionCode);
+    if (auth.currentUser) {
+      await auth.currentUser.reload();
+      await auth.currentUser.getIdToken(true);
+      setFirebaseUser(auth.currentUser);
+      await syncUserAndRole(auth.currentUser);
+    }
   };
 
   const resendVerificationEmail = async () => {
@@ -206,6 +255,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         loginWithEmail,
         registerWithEmail,
         sendPasswordReset,
+        verifyResetCode,
+        completePasswordReset,
+        verifyEmailActionCode,
         resendVerificationEmail,
         refreshAuthUser,
         updateCustomerProfile,

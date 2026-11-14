@@ -30,7 +30,7 @@ All pricing operates strictly in **Nigerian Naira (`₦` / `NGN`)** stored as in
 
 - **Frontend**: `src/` (`React`, `react-router-dom`, `Tailwind CSS v4`, live `onSnapshot` listeners)
 - **Backend Proxy & SSR SEO Server**: `server.ts` (Express serving Vite in dev / `dist` in production, `/api/health`, `/robots.txt`, dynamic `/sitemap.xml`, `/api/email/*`, and `/api/admin/*` endpoints)
-- **Cloud Functions**: `functions/src/index.ts` (`setAdminClaim`, `calculateCheckoutTotals`, `createOrder`, `markOrderReceived`, `submitPayment`, `verifyPayment`, `rejectPayment`, `recordRefundConfirmed`, `updateOrderStatus`, `adminGetDashboardStats`, `adminAdjustInventory`, `processEmailOutboxOnCreate`, `processEmailOutboxOnRequeue`, `retryFailedEmailsSchedule`, `sendTestEmail`, `retryFailedEmail`, `brevoWebhook`)
+- **Cloud Functions**: `functions/src/index.ts` (`setAdminClaim`, `calculateCheckoutTotals`, `createOrder`, `markOrderReceived`, `submitPayment`, `verifyPayment`, `rejectPayment`, `recordRefundConfirmed`, `updateOrderStatus`, `adminGetDashboardStats`, `adminAdjustInventory`, `onNewCustomerCreated`, `processEmailOutboxOnCreate`, `processEmailOutboxOnRequeue`, `retryFailedEmailsSchedule`, `sendTestEmail`, `retryFailedEmail`, `brevoWebhook`)
 - **Security**: `firestore.rules`, `storage.rules`, `firestore.indexes.json`, `firebase-blueprint.json`, `security_spec.md`
 
 ---
@@ -66,13 +66,13 @@ Email API keys are never exposed in frontend code or `VITE_*` variables. Configu
 2. **Store `BREVO_API_KEY` in Firebase Secret Manager**:
    ```bash
    firebase login
-   firebase use gen-lang-client-0329974020
+   firebase use reddox211
    firebase functions:secrets:set BREVO_API_KEY
    ```
    Configure server environment variables in `functions/.env` (non-secret configuration):
    - `BREVO_FROM_EMAIL="orders@yourdomain.com"`
    - `BREVO_FROM_NAME="KoraMarket Nigeria"`
-   - `ADMIN_NOTIFICATION_EMAIL="admin@yourdomain.com"`
+   - `ADMIN_NOTIFICATION_EMAIL="reddox528@gmail.com"`
    - `APP_URL="https://your-live-domain.com"`
 3. **Deploy Cloud Functions**:
    ```bash
@@ -86,13 +86,13 @@ Email API keys are never exposed in frontend code or `VITE_*` variables. Configu
    - In Admin Dashboard → **Settings** → **Automated Email Notifications (Brevo)**, set your **Admin Notification Email**, verified sender email, reply-to, and per-event toggles, then click **Send Test Email**.
    - Inspect **Admin → Email Outbox & Alerts** (`/admin/notifications`) to audit `Sent` / `Queued` / `Failed` statuses, Brevo `messageId` records, webhook delivery states (`accepted_by_provider` vs `delivered`), HTML previews, or manually retry failed emails.
 
-### 4. Firebase Console Configuration (Project: `gen-lang-client-0329974020`)
-`firestore.rules` has been deployed to Firestore database `ai-studio-0aa6a804-3df3-4c29-9094-ee6edaaf8941`. Complete the remaining steps in the [Firebase Console](https://console.firebase.google.com/project/gen-lang-client-0329974020):
+### 4. Firebase Console Configuration (Project: `reddox211`)
+`firestore.rules` has been deployed to Firestore database `ai-studio-0aa6a804-3df3-4c29-9094-ee6edaaf8941`. Complete the remaining steps in the [Firebase Console](https://console.firebase.google.com/project/reddox211):
 
 1. **Enable Email/Password Authentication**:
    - Go to **Authentication → Sign-in method** → enable **Email/Password** (Google Sign-In is enabled automatically).
 2. **Enable Firebase Storage**:
-   - Go to **Storage → Get Started** to activate the default bucket (`gen-lang-client-0329974020.firebasestorage.app`).
+   - Go to **Storage → Get Started** to activate the default bucket (`reddox211.firebasestorage.app`).
 3. **Deploy Storage Rules & Indexes**:
    ```bash
    firebase deploy --only storage,firestore:indexes

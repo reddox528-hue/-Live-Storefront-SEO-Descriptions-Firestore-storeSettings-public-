@@ -109,6 +109,7 @@ export const DEFAULT_EMAIL_PREFERENCES: Omit<
   senderEmail: '',
   replyToEmail: 'hello@koramarket.ng',
   events: {
+    newCustomerAdmin: true,
     orderPlacedCustomer: true,
     orderPlacedAdmin: true,
     orderPendingNotice: false,
@@ -121,12 +122,17 @@ export const DEFAULT_EMAIL_PREFERENCES: Omit<
     paymentRejectedCustomer: true,
     paymentRejectedAdmin: true,
     orderProcessingCustomer: true,
+    orderProcessingAdmin: true,
     readyForDispatchCustomer: true,
+    readyForDispatchAdmin: true,
     outForDeliveryCustomer: true,
+    outForDeliveryAdmin: true,
     deliveredCustomer: true,
+    deliveredAdmin: true,
     orderCancelledCustomer: true,
     orderCancelledAdmin: true,
     refundConfirmedCustomer: true,
+    refundConfirmedAdmin: true,
   },
 };
 

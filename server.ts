@@ -8,6 +8,7 @@ import { initializeApp as initAdminApp, cert, getApps } from 'firebase-admin/app
 import { getAuth as getAdminAuth } from 'firebase-admin/auth';
 import { getFirestore as getAdminFirestore, FieldValue } from 'firebase-admin/firestore';
 import { isValidEmailAddress, sendBrevoTransactionalEmail } from './functions/src/brevoClient';
+import { buildAdminNewCustomerEmail } from './functions/src/emailTemplates';
 
 dotenv.config();
 
@@ -28,6 +29,7 @@ try {
 }
 
 let adminSdkReady = false;
+let serviceAccountProjectMatches: boolean | null = null;
 let adminDb: ReturnType<typeof getAdminFirestore> | null = null;
 let adminAuth: ReturnType<typeof getAdminAuth> | null = null;
 
@@ -35,6 +37,13 @@ try {
   const serviceAccountRaw = process.env.FIREBASE_SERVICE_ACCOUNT_KEY;
   if (serviceAccountRaw && serviceAccountRaw.trim().startsWith('{')) {
     const parsed = JSON.parse(serviceAccountRaw);
+    serviceAccountProjectMatches =
+      Boolean(parsed.project_id) && parsed.project_id === firebaseConfig.projectId;
+    if (!serviceAccountProjectMatches) {
+      console.warn(
+        `[Firebase Admin SDK Warning] Service account project_id (${parsed.project_id || 'unknown'}) does not match firebase-applet-config projectId (${firebaseConfig.projectId || 'unknown'}).`
+      );
+    }
     const app = getApps().length
       ? getApps()[0]
       : initAdminApp({
@@ -81,8 +90,13 @@ async function startServer() {
     res.json({
       ok: true,
       adminSdkReady,
+      serviceAccountProjectMatches,
       projectId: firebaseConfig.projectId || null,
       databaseId: firebaseConfig.firestoreDatabaseId || null,
+      brevoApiKeyConfigured: Boolean(process.env.BREVO_API_KEY),
+      brevoFromEmailConfigured: Boolean(process.env.BREVO_FROM_EMAIL),
+      adminNotificationEmail: process.env.ADMIN_NOTIFICATION_EMAIL || BOOTSTRAP_OWNER_EMAIL,
+      appUrlConfigured: Boolean(process.env.APP_URL),
     });
   });
 
@@ -392,6 +406,112 @@ async function startServer() {
     if (!snap.exists) return res.status(404).json({ error: 'Notification not found.' });
     const result = await dispatchDocViaBrevo(snap);
     return res.json(result);
+  });
+
+  app.get('/api/email/status', async (req, res) => {
+    const adminUser = await assertAdminRequest(req);
+    if (!adminUser) {
+      return res.status(403).json({ error: 'Administrator authorization required.' });
+    }
+    return res.json({
+      adminSdkReady,
+      brevoApiKeyConfigured: Boolean(process.env.BREVO_API_KEY),
+      brevoFromEmailConfigured: Boolean(process.env.BREVO_FROM_EMAIL),
+      brevoFromName: process.env.BREVO_FROM_NAME || null,
+      adminNotificationEmail: process.env.ADMIN_NOTIFICATION_EMAIL || BOOTSTRAP_OWNER_EMAIL,
+      appUrl: process.env.APP_URL || null,
+    });
+  });
+
+  app.post('/api/email/new-customer', async (req, res) => {
+    if (!adminSdkReady || !adminDb) {
+      return res.status(501).json({ code: 'ADMIN_SDK_UNCONFIGURED' });
+    }
+    const user = await verifyBearerToken(req);
+    if (!user || !user.email_verified) {
+      return res.status(401).json({ error: 'Verified authentication required.' });
+    }
+
+    const userSnap = await adminDb.collection('users').doc(user.uid).get();
+    if (!userSnap.exists) {
+      return res.status(404).json({ error: 'Customer profile not found.' });
+    }
+    const userData = userSnap.data()!;
+    if (userData.role === 'admin') {
+      return res.json({ skipped: true });
+    }
+
+    const [pubSnap, emailPrefSnap] = await Promise.all([
+      adminDb.collection('storeSettings').doc('public').get(),
+      adminDb.collection('storeSettings').doc('emailPreferences').get(),
+    ]);
+    const pub = pubSnap.exists ? pubSnap.data()! : {};
+    const emailPrefs = emailPrefSnap.exists ? emailPrefSnap.data()! : {};
+    if (emailPrefs.emailsEnabled === false || emailPrefs.events?.newCustomerAdmin === false) {
+      return res.json({ skipped: true });
+    }
+
+    const adminRecipient = String(
+      emailPrefs.adminNotificationEmail || process.env.ADMIN_NOTIFICATION_EMAIL || BOOTSTRAP_OWNER_EMAIL
+    ).trim();
+    const baseAppUrl = process.env.APP_URL || `${req.protocol}://${req.get('host')}`;
+    const timestampWat =
+      new Intl.DateTimeFormat('en-NG', {
+        timeZone: 'Africa/Lagos',
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+      }).format(new Date()) + ' WAT';
+
+    const mail = buildAdminNewCustomerEmail({
+      storeName:
+        pub.storeName || emailPrefs.senderName || process.env.BREVO_FROM_NAME || 'KoraMarket Nigeria',
+      logoUrl: pub.logoUrl || '',
+      contactEmail: pub.contactEmail || '',
+      phoneNumber: pub.phoneNumber || '',
+      businessAddress: pub.businessAddress || '',
+      primaryColor: '#065F46',
+      appUrl: baseAppUrl,
+      customerId: user.uid,
+      customerName: String(userData.fullName || user.name || 'Customer'),
+      customerEmail: String(userData.email || user.email || ''),
+      customerPhone: String(userData.phone || ''),
+      timestampWat,
+    });
+
+    const eventId = `user:${user.uid}:new_customer:admin`;
+    const safeId = `em_${eventId.replace(/[^a-zA-Z0-9_-]/g, '_').slice(0, 118)}`;
+    const notifRef = adminDb.collection('emailNotifications').doc(safeId);
+
+    try {
+      await notifRef.create({
+        notificationId: safeId,
+        eventId,
+        orderId: '',
+        orderNumber: 'NEW-CUSTOMER',
+        recipient: adminRecipient,
+        recipientType: 'admin',
+        notificationType: 'new_customer',
+        subject: mail.subject,
+        htmlBody: mail.html,
+        status: 'queued',
+        deliveryStatus: 'pending',
+        attemptCount: 0,
+        createdAt: FieldValue.serverTimestamp(),
+        updatedAt: FieldValue.serverTimestamp(),
+      });
+    } catch (err: any) {
+      if (err?.code === 6 || String(err?.message || '').includes('ALREADY_EXISTS')) {
+        return res.json({ duplicate: true, notificationId: safeId });
+      }
+      throw err;
+    }
+
+    const freshSnap = await notifRef.get();
+    const dispatchResult = await dispatchDocViaBrevo(freshSnap);
+    return res.json({ notificationId: safeId, ...dispatchResult });
   });
 
   if (process.env.NODE_ENV !== 'production') {

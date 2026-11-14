@@ -102,10 +102,13 @@ function wrapLayout(
             </td>
           </tr>
           <tr>
-            <td style="background-color:#fafafa;padding:20px 28px;border-top:1px solid #e4e4e7;font-size:12px;color:#71717a;line-height:1.5;">
+            <td style="background-color:#fafafa;padding:20px 28px;border-top:1px solid #e4e4e7;font-size:12px;color:#71717a;line-height:1.6;">
               <strong style="color:#18181b;">${esc(ctx.storeName)}</strong><br/>
               ${ctx.businessAddress ? `${esc(ctx.businessAddress)}<br/>` : ''}
               ${ctx.contactEmail ? `Email: ${esc(ctx.contactEmail)}` : ''}${ctx.phoneNumber ? ` · Tel: ${esc(ctx.phoneNumber)}` : ''}
+              <div style="margin-top:8px;font-size:11px;color:#a1a1aa;">
+                Automated transactional notification · Prices stated in Nigerian Naira (₦).
+              </div>
             </td>
           </tr>
         </table>
@@ -208,17 +211,21 @@ export function buildAdminNewOrderEmail(ctx: EmailTemplateContext): { subject: s
     ctx,
     `New Order: ${ctx.orderNumber}`,
     'Admin Action Required',
-    `<p>A new order has been placed and is awaiting your acknowledgement (<strong>MARK AS RECEIVED</strong>).</p>
+    `<p>Hello Store Administrator,</p>
+     <p>A new order has been placed on <strong>${esc(ctx.storeName)}</strong> and is awaiting your acknowledgement (<strong>MARK AS RECEIVED</strong>).</p>
      <table width="100%" cellspacing="0" cellpadding="4" style="font-size:13px;background:#fafafa;border:1px solid #e4e4e7;border-radius:8px;padding:12px;margin:12px 0;">
-       <tr><td><strong>Order Number:</strong></td><td style="font-family:monospace;">${esc(ctx.orderNumber)}</td></tr>
-       <tr><td><strong>Customer:</strong></td><td>${esc(ctx.customerName)} (${esc(ctx.customerEmail)})</td></tr>
-       <tr><td><strong>Phone:</strong></td><td>${esc(ctx.customerPhone || '—')}</td></tr>
+       <tr><td><strong>Order ID:</strong></td><td style="font-family:monospace;font-weight:700;">${esc(ctx.orderNumber)}</td></tr>
+       <tr><td><strong>Customer Name:</strong></td><td>${esc(ctx.customerName)}</td></tr>
+       <tr><td><strong>Customer Email:</strong></td><td>${esc(ctx.customerEmail)}</td></tr>
+       <tr><td><strong>Customer Phone:</strong></td><td>${esc(ctx.customerPhone || 'Not provided')}</td></tr>
+       <tr><td><strong>Payment Method:</strong></td><td>Nigerian Bank Transfer</td></tr>
        <tr><td><strong>Payment Status:</strong></td><td>${esc(ctx.paymentStatusLabel)}</td></tr>
+       <tr><td><strong>Order Total (NGN):</strong></td><td style="font-family:monospace;font-weight:700;color:#065F46;">${formatNairaHtml(ctx.totalKobo)}</td></tr>
        <tr><td><strong>Delivery Address:</strong></td><td>${esc(ctx.deliveryAddressText || '—')}</td></tr>
-       <tr><td><strong>Placed At (WAT):</strong></td><td>${esc(ctx.timestampWat || '—')}</td></tr>
+       <tr><td><strong>Order Date (WAT):</strong></td><td>${esc(ctx.timestampWat || '—')}</td></tr>
      </table>
      ${renderOrderItemsTable(ctx)}
-     ${ctaButton(adminUrl, 'Open Order in Admin Dashboard', '#0f172a')}`
+     ${ctaButton(adminUrl, 'View Order in Admin Dashboard', '#0f172a')}`
   );
   return { subject: `New Order Received – ${ctx.orderNumber}`, html };
 }
@@ -284,15 +291,18 @@ export function buildAdminPaymentSubmittedEmail(ctx: EmailTemplateContext): { su
     ctx,
     `Verify Payment for ${ctx.orderNumber}`,
     'Payment Verification Required',
-    `<p>Customer <strong>${esc(ctx.customerName)}</strong> has submitted bank transfer proof for order <strong>${esc(ctx.orderNumber)}</strong>.</p>
+    `<p>Hello Store Administrator,</p>
+     <p>Customer <strong>${esc(ctx.customerName)}</strong> has submitted bank transfer payment proof for order <strong>${esc(ctx.orderNumber)}</strong>.</p>
      <div style="background:#fffbeb;border:1px solid #fde68a;border-radius:8px;padding:14px;margin:14px 0;font-size:13px;">
-       <div><strong>Order Number:</strong> ${esc(ctx.orderNumber)}</div>
-       <div><strong>Amount Claimed:</strong> <span style="font-family:monospace;font-weight:700;">${formatNairaHtml(ctx.totalKobo)}</span></div>
-       <div><strong>Transfer Reference:</strong> <span style="font-family:monospace;">${esc(ctx.transferReference)}</span></div>
-       <div><strong>Transfer Date:</strong> ${esc(ctx.transferDate)}</div>
+       <div><strong>Order ID:</strong> <span style="font-family:monospace;">${esc(ctx.orderNumber)}</span></div>
+       <div><strong>Customer Name:</strong> ${esc(ctx.customerName)}</div>
+       <div><strong>Amount Submitted:</strong> <span style="font-family:monospace;font-weight:700;">${formatNairaHtml(ctx.totalKobo)}</span></div>
+       <div><strong>Payment Reference:</strong> <span style="font-family:monospace;">${esc(ctx.transferReference || 'Not provided')}</span></div>
+       <div><strong>Transfer Date:</strong> ${esc(ctx.transferDate || '—')}</div>
+       <div><strong>Submitted At (WAT):</strong> ${esc(ctx.timestampWat || '—')}</div>
      </div>
      <p>Confirm cleared funds in your bank statement before clicking <strong>Confirm Bank Transfer Paid</strong>.</p>
-     ${ctaButton(adminUrl, 'Inspect Receipt & Verify Payment', '#0f172a')}`
+     ${ctaButton(adminUrl, 'Review Payment in Admin Dashboard', '#0f172a')}`
   );
   return { subject: `Payment Verification Required – ${ctx.orderNumber}`, html };
 }
@@ -455,3 +465,105 @@ export function buildCustomerRefundConfirmedEmail(ctx: EmailTemplateContext): { 
   );
   return { subject: `Refund Confirmed – ${ctx.orderNumber}`, html };
 }
+
+export function buildAdminStatusStageEmail(
+  ctx: EmailTemplateContext,
+  stage: 'order_processing' | 'ready_for_dispatch' | 'out_for_delivery' | 'order_delivered'
+): { subject: string; html: string } {
+  const adminUrl = `${ctx.appUrl.replace(/\/$/, '')}/admin/orders/${ctx.orderId}`;
+  const stageMeta: Record<typeof stage, { subject: string; badge: string; label: string }> = {
+    order_processing: {
+      subject: `Order Processing Started – ${ctx.orderNumber}`,
+      badge: 'Processing',
+      label: 'Processing',
+    },
+    ready_for_dispatch: {
+      subject: `Order Ready for Dispatch – ${ctx.orderNumber}`,
+      badge: 'Ready for Dispatch',
+      label: 'Ready for Dispatch',
+    },
+    out_for_delivery: {
+      subject: `Order Out for Delivery – ${ctx.orderNumber}`,
+      badge: 'Out for Delivery',
+      label: 'Out for Delivery',
+    },
+    order_delivered: {
+      subject: `Order Delivered – ${ctx.orderNumber}`,
+      badge: 'Delivered',
+      label: 'Delivered',
+    },
+  };
+  const info = stageMeta[stage];
+  const html = wrapLayout(
+    ctx,
+    `${info.label}: ${ctx.orderNumber}`,
+    `Admin Log · ${info.badge}`,
+    `<p>Hello Store Administrator,</p>
+     <p>Order <strong>${esc(ctx.orderNumber)}</strong> for <strong>${esc(ctx.customerName)}</strong> has transitioned to <strong>${esc(info.label)}</strong>.</p>
+     <div style="background:#fafafa;border:1px solid #e4e4e7;border-radius:8px;padding:14px;margin:14px 0;font-size:13px;">
+       <div><strong>Order ID:</strong> <span style="font-family:monospace;">${esc(ctx.orderNumber)}</span></div>
+       <div><strong>Customer:</strong> ${esc(ctx.customerName)} (${esc(ctx.customerEmail)})</div>
+       <div><strong>Order Total (NGN):</strong> <span style="font-family:monospace;font-weight:700;">${formatNairaHtml(ctx.totalKobo)}</span></div>
+       <div><strong>Payment Status:</strong> ${esc(ctx.paymentStatusLabel)}</div>
+       ${ctx.deliveryPersonnel ? `<div><strong>Dispatch Rider / Courier:</strong> ${esc(ctx.deliveryPersonnel)}</div>` : ''}
+       ${ctx.trackingNotes ? `<div><strong>Tracking Notes:</strong> ${esc(ctx.trackingNotes)}</div>` : ''}
+       <div><strong>Updated At (WAT):</strong> ${esc(ctx.timestampWat || '—')}</div>
+     </div>
+     ${ctaButton(adminUrl, 'View Order in Admin Dashboard', '#0f172a')}`
+  );
+  return { subject: info.subject, html };
+}
+
+export function buildAdminRefundConfirmedEmail(ctx: EmailTemplateContext): { subject: string; html: string } {
+  const adminUrl = `${ctx.appUrl.replace(/\/$/, '')}/admin/orders/${ctx.orderId}`;
+  const html = wrapLayout(
+    ctx,
+    `Refund Confirmed: ${ctx.orderNumber}`,
+    'Admin Log · Refund Completed',
+    `<p>Hello Store Administrator,</p>
+     <p>A refund of <strong>${formatNairaHtml(ctx.totalKobo)}</strong> has been confirmed for order <strong>${esc(ctx.orderNumber)}</strong> (${esc(ctx.customerName)}).</p>
+     <div style="background:#fafafa;border:1px solid #e4e4e7;border-radius:8px;padding:14px;margin:14px 0;font-size:13px;">
+       <div><strong>Order ID:</strong> <span style="font-family:monospace;">${esc(ctx.orderNumber)}</span></div>
+       <div><strong>Customer:</strong> ${esc(ctx.customerName)} (${esc(ctx.customerEmail)})</div>
+       <div><strong>Refund Amount (NGN):</strong> <span style="font-family:monospace;font-weight:700;">${formatNairaHtml(ctx.totalKobo)}</span></div>
+       ${ctx.refundNotes ? `<div><strong>Refund Reference / Notes:</strong> ${esc(ctx.refundNotes)}</div>` : ''}
+       <div><strong>Confirmed At (WAT):</strong> ${esc(ctx.timestampWat || '—')}</div>
+     </div>
+     ${ctaButton(adminUrl, 'View Order in Admin Dashboard', '#0f172a')}`
+  );
+  return { subject: `Refund Confirmed – ${ctx.orderNumber}`, html };
+}
+
+export function buildAdminNewCustomerEmail(ctx: {
+  storeName: string;
+  logoUrl?: string;
+  contactEmail?: string;
+  phoneNumber?: string;
+  businessAddress?: string;
+  primaryColor?: string;
+  appUrl: string;
+  customerId: string;
+  customerName: string;
+  customerEmail: string;
+  customerPhone?: string;
+  timestampWat?: string;
+}): { subject: string; html: string } {
+  const customersUrl = `${ctx.appUrl.replace(/\/$/, '')}/admin/customers`;
+  const html = wrapLayout(
+    ctx,
+    `New Customer Account: ${ctx.customerName}`,
+    'New Customer Registered',
+    `<p>Hello Store Administrator,</p>
+     <p>A new verified customer account has been created on <strong>${esc(ctx.storeName)}</strong>.</p>
+     <div style="background:#fafafa;border:1px solid #e4e4e7;border-radius:8px;padding:14px;margin:14px 0;font-size:13px;">
+       <div><strong>Customer Name:</strong> ${esc(ctx.customerName)}</div>
+       <div><strong>Email Address:</strong> ${esc(ctx.customerEmail)}</div>
+       <div><strong>Phone Number:</strong> ${esc(ctx.customerPhone || 'Not provided')}</div>
+       <div><strong>Customer ID:</strong> <span style="font-family:monospace;">${esc(ctx.customerId)}</span></div>
+       <div><strong>Registered At (WAT):</strong> ${esc(ctx.timestampWat || '—')}</div>
+     </div>
+     ${ctaButton(customersUrl, 'View Customers in Admin Dashboard', '#0f172a')}`
+  );
+  return { subject: `New Customer Registered – ${ctx.customerName}`, html };
+}
+

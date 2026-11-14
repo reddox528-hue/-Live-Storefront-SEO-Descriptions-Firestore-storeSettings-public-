@@ -65,6 +65,8 @@ import {
   buildAdminPaymentRejectedEmail,
   buildAdminPaymentSubmittedEmail,
   buildAdminPaymentVerifiedEmail,
+  buildAdminRefundConfirmedEmail,
+  buildAdminStatusStageEmail,
   buildCustomerOrderPlacedEmail,
   buildCustomerOrderReceivedEmail,
   buildCustomerPaymentRejectedEmail,
@@ -675,6 +677,24 @@ async function tryTriggerExpressDispatch(notificationIds: string[]): Promise<voi
     });
   } catch {
     // Non-fatal: doc remains safely queued in Firestore for Cloud Function or manual retry
+  }
+}
+
+export async function notifyNewCustomerAccount(): Promise<void> {
+  if (USE_CLOUD_FUNCTIONS) return;
+  try {
+    const user = auth.currentUser;
+    if (!user) return;
+    const token = await user.getIdToken();
+    await fetch('/api/email/new-customer', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+    });
+  } catch {
+    // Non-fatal: account registration succeeds even if preview email backend is inactive
   }
 }
 
@@ -1867,64 +1887,122 @@ export async function adminUpdateOrderStatus(params: {
             });
             if (id) queuedIds.push(id);
           }
-        } else if (targetOrderStatus === 'processing' && emailPrefs.events.orderProcessingCustomer) {
-          const mail = buildCustomerStatusStageEmail(ctx, 'order_processing');
-          const id = await enqueueEmailNotificationDoc({
-            eventId: `${ord.orderId}:order_processing:${historyId}`,
-            orderId: ord.orderId,
-            orderNumber: ord.orderNumber,
-            recipient: ord.customerSnapshot.email,
-            recipientType: 'customer',
-            notificationType: 'order_processing',
-            subject: mail.subject,
-            htmlBody: mail.html,
-          });
-          if (id) queuedIds.push(id);
-        } else if (
-          targetOrderStatus === 'ready_for_dispatch' &&
-          emailPrefs.events.readyForDispatchCustomer
-        ) {
-          const mail = buildCustomerStatusStageEmail(ctx, 'ready_for_dispatch');
-          const id = await enqueueEmailNotificationDoc({
-            eventId: `${ord.orderId}:ready_for_dispatch:${historyId}`,
-            orderId: ord.orderId,
-            orderNumber: ord.orderNumber,
-            recipient: ord.customerSnapshot.email,
-            recipientType: 'customer',
-            notificationType: 'ready_for_dispatch',
-            subject: mail.subject,
-            htmlBody: mail.html,
-          });
-          if (id) queuedIds.push(id);
-        } else if (
-          targetOrderStatus === 'out_for_delivery' &&
-          emailPrefs.events.outForDeliveryCustomer
-        ) {
-          const mail = buildCustomerStatusStageEmail(ctx, 'out_for_delivery');
-          const id = await enqueueEmailNotificationDoc({
-            eventId: `${ord.orderId}:out_for_delivery:${historyId}`,
-            orderId: ord.orderId,
-            orderNumber: ord.orderNumber,
-            recipient: ord.customerSnapshot.email,
-            recipientType: 'customer',
-            notificationType: 'out_for_delivery',
-            subject: mail.subject,
-            htmlBody: mail.html,
-          });
-          if (id) queuedIds.push(id);
-        } else if (targetOrderStatus === 'delivered' && emailPrefs.events.deliveredCustomer) {
-          const mail = buildCustomerStatusStageEmail(ctx, 'order_delivered');
-          const id = await enqueueEmailNotificationDoc({
-            eventId: `${ord.orderId}:order_delivered:${historyId}`,
-            orderId: ord.orderId,
-            orderNumber: ord.orderNumber,
-            recipient: ord.customerSnapshot.email,
-            recipientType: 'customer',
-            notificationType: 'order_delivered',
-            subject: mail.subject,
-            htmlBody: mail.html,
-          });
-          if (id) queuedIds.push(id);
+        } else if (targetOrderStatus === 'processing') {
+          if (emailPrefs.events.orderProcessingCustomer) {
+            const mail = buildCustomerStatusStageEmail(ctx, 'order_processing');
+            const id = await enqueueEmailNotificationDoc({
+              eventId: `${ord.orderId}:order_processing:${historyId}:customer`,
+              orderId: ord.orderId,
+              orderNumber: ord.orderNumber,
+              recipient: ord.customerSnapshot.email,
+              recipientType: 'customer',
+              notificationType: 'order_processing',
+              subject: mail.subject,
+              htmlBody: mail.html,
+            });
+            if (id) queuedIds.push(id);
+          }
+          if (emailPrefs.events.orderProcessingAdmin) {
+            const adminMail = buildAdminStatusStageEmail(ctx, 'order_processing');
+            const id = await enqueueEmailNotificationDoc({
+              eventId: `${ord.orderId}:order_processing:${historyId}:admin`,
+              orderId: ord.orderId,
+              orderNumber: ord.orderNumber,
+              recipient: emailPrefs.adminNotificationEmail || 'reddox528@gmail.com',
+              recipientType: 'admin',
+              notificationType: 'order_processing',
+              subject: adminMail.subject,
+              htmlBody: adminMail.html,
+            });
+            if (id) queuedIds.push(id);
+          }
+        } else if (targetOrderStatus === 'ready_for_dispatch') {
+          if (emailPrefs.events.readyForDispatchCustomer) {
+            const mail = buildCustomerStatusStageEmail(ctx, 'ready_for_dispatch');
+            const id = await enqueueEmailNotificationDoc({
+              eventId: `${ord.orderId}:ready_for_dispatch:${historyId}:customer`,
+              orderId: ord.orderId,
+              orderNumber: ord.orderNumber,
+              recipient: ord.customerSnapshot.email,
+              recipientType: 'customer',
+              notificationType: 'ready_for_dispatch',
+              subject: mail.subject,
+              htmlBody: mail.html,
+            });
+            if (id) queuedIds.push(id);
+          }
+          if (emailPrefs.events.readyForDispatchAdmin) {
+            const adminMail = buildAdminStatusStageEmail(ctx, 'ready_for_dispatch');
+            const id = await enqueueEmailNotificationDoc({
+              eventId: `${ord.orderId}:ready_for_dispatch:${historyId}:admin`,
+              orderId: ord.orderId,
+              orderNumber: ord.orderNumber,
+              recipient: emailPrefs.adminNotificationEmail || 'reddox528@gmail.com',
+              recipientType: 'admin',
+              notificationType: 'ready_for_dispatch',
+              subject: adminMail.subject,
+              htmlBody: adminMail.html,
+            });
+            if (id) queuedIds.push(id);
+          }
+        } else if (targetOrderStatus === 'out_for_delivery') {
+          if (emailPrefs.events.outForDeliveryCustomer) {
+            const mail = buildCustomerStatusStageEmail(ctx, 'out_for_delivery');
+            const id = await enqueueEmailNotificationDoc({
+              eventId: `${ord.orderId}:out_for_delivery:${historyId}:customer`,
+              orderId: ord.orderId,
+              orderNumber: ord.orderNumber,
+              recipient: ord.customerSnapshot.email,
+              recipientType: 'customer',
+              notificationType: 'out_for_delivery',
+              subject: mail.subject,
+              htmlBody: mail.html,
+            });
+            if (id) queuedIds.push(id);
+          }
+          if (emailPrefs.events.outForDeliveryAdmin) {
+            const adminMail = buildAdminStatusStageEmail(ctx, 'out_for_delivery');
+            const id = await enqueueEmailNotificationDoc({
+              eventId: `${ord.orderId}:out_for_delivery:${historyId}:admin`,
+              orderId: ord.orderId,
+              orderNumber: ord.orderNumber,
+              recipient: emailPrefs.adminNotificationEmail || 'reddox528@gmail.com',
+              recipientType: 'admin',
+              notificationType: 'out_for_delivery',
+              subject: adminMail.subject,
+              htmlBody: adminMail.html,
+            });
+            if (id) queuedIds.push(id);
+          }
+        } else if (targetOrderStatus === 'delivered') {
+          if (emailPrefs.events.deliveredCustomer) {
+            const mail = buildCustomerStatusStageEmail(ctx, 'order_delivered');
+            const id = await enqueueEmailNotificationDoc({
+              eventId: `${ord.orderId}:order_delivered:${historyId}:customer`,
+              orderId: ord.orderId,
+              orderNumber: ord.orderNumber,
+              recipient: ord.customerSnapshot.email,
+              recipientType: 'customer',
+              notificationType: 'order_delivered',
+              subject: mail.subject,
+              htmlBody: mail.html,
+            });
+            if (id) queuedIds.push(id);
+          }
+          if (emailPrefs.events.deliveredAdmin) {
+            const adminMail = buildAdminStatusStageEmail(ctx, 'order_delivered');
+            const id = await enqueueEmailNotificationDoc({
+              eventId: `${ord.orderId}:order_delivered:${historyId}:admin`,
+              orderId: ord.orderId,
+              orderNumber: ord.orderNumber,
+              recipient: emailPrefs.adminNotificationEmail || 'reddox528@gmail.com',
+              recipientType: 'admin',
+              notificationType: 'order_delivered',
+              subject: adminMail.subject,
+              htmlBody: adminMail.html,
+            });
+            if (id) queuedIds.push(id);
+          }
         } else if (targetOrderStatus === 'cancelled') {
           if (emailPrefs.events.orderCancelledCustomer) {
             const custMail = buildOrderCancelledEmail(ctx, 'customer');
@@ -2064,22 +2142,40 @@ export async function adminRecordRefundConfirmed(params: {
         }),
       ]);
 
-      if (emailPrefs.emailsEnabled && emailPrefs.events.refundConfirmedCustomer) {
+      if (emailPrefs.emailsEnabled) {
         const ctx = buildEmailContextFromOrder(ord, pubSettings, bankSettings, {
           refundNotes: params.refundNotes.trim(),
         });
-        const mail = buildCustomerRefundConfirmedEmail(ctx);
-        const id = await enqueueEmailNotificationDoc({
-          eventId: `${ord.orderId}:refund_confirmed:customer`,
-          orderId: ord.orderId,
-          orderNumber: ord.orderNumber,
-          recipient: ord.customerSnapshot.email,
-          recipientType: 'customer',
-          notificationType: 'refund_confirmed',
-          subject: mail.subject,
-          htmlBody: mail.html,
-        });
-        if (id) void tryTriggerExpressDispatch([id]);
+        const queuedIds: string[] = [];
+        if (emailPrefs.events.refundConfirmedCustomer) {
+          const mail = buildCustomerRefundConfirmedEmail(ctx);
+          const id = await enqueueEmailNotificationDoc({
+            eventId: `${ord.orderId}:refund_confirmed:customer`,
+            orderId: ord.orderId,
+            orderNumber: ord.orderNumber,
+            recipient: ord.customerSnapshot.email,
+            recipientType: 'customer',
+            notificationType: 'refund_confirmed',
+            subject: mail.subject,
+            htmlBody: mail.html,
+          });
+          if (id) queuedIds.push(id);
+        }
+        if (emailPrefs.events.refundConfirmedAdmin) {
+          const adminMail = buildAdminRefundConfirmedEmail(ctx);
+          const id = await enqueueEmailNotificationDoc({
+            eventId: `${ord.orderId}:refund_confirmed:admin`,
+            orderId: ord.orderId,
+            orderNumber: ord.orderNumber,
+            recipient: emailPrefs.adminNotificationEmail || 'reddox528@gmail.com',
+            recipientType: 'admin',
+            notificationType: 'refund_confirmed',
+            subject: adminMail.subject,
+            htmlBody: adminMail.html,
+          });
+          if (id) queuedIds.push(id);
+        }
+        void tryTriggerExpressDispatch(queuedIds);
       }
     }
   } catch (err) {

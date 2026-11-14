@@ -57,6 +57,7 @@ export type EmailNotificationType =
   | 'order_delivered'
   | 'order_cancelled'
   | 'refund_confirmed'
+  | 'new_customer'
   | 'test_email';
 
 export interface UserProfile {
@@ -356,6 +357,7 @@ export interface StorePrivateSettings {
 }
 
 export interface EmailEventPreferences {
+  newCustomerAdmin: boolean;
   orderPlacedCustomer: boolean;
   orderPlacedAdmin: boolean;
   orderPendingNotice: boolean; // Kept false by default to avoid duplicate mail with orderPlacedCustomer
@@ -368,12 +370,17 @@ export interface EmailEventPreferences {
   paymentRejectedCustomer: boolean;
   paymentRejectedAdmin: boolean;
   orderProcessingCustomer: boolean;
+  orderProcessingAdmin: boolean;
   readyForDispatchCustomer: boolean;
+  readyForDispatchAdmin: boolean;
   outForDeliveryCustomer: boolean;
+  outForDeliveryAdmin: boolean;
   deliveredCustomer: boolean;
+  deliveredAdmin: boolean;
   orderCancelledCustomer: boolean;
   orderCancelledAdmin: boolean;
   refundConfirmedCustomer: boolean;
+  refundConfirmedAdmin: boolean;
 }
 
 export interface EmailPreferencesSettings {

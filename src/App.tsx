@@ -14,7 +14,12 @@ import { ShopPage } from './pages/store/ShopPage';
 import { ProductDetailsPage } from './pages/store/ProductDetailsPage';
 import { CartPage } from './pages/store/CartPage';
 import { CheckoutPage } from './pages/store/CheckoutPage';
-import { ForgotPasswordPage, LoginPage, RegisterPage } from './pages/store/AuthPages';
+import {
+  ForgotPasswordPage,
+  LoginPage,
+  RegisterPage,
+  ResetPasswordPage,
+} from './pages/store/AuthPages';
 import { AccountPage } from './pages/store/AccountPage';
 import { OrderDetailPage } from './pages/store/OrderDetailPage';
 import {
@@ -101,6 +106,9 @@ export default function App() {
             <Route path="/login" element={<LoginPage />} />
             <Route path="/register" element={<RegisterPage />} />
             <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+            <Route path="/reset-password" element={<ResetPasswordPage />} />
+            <Route path="/auth/action" element={<ResetPasswordPage />} />
+            <Route path="/__/auth/action" element={<ResetPasswordPage />} />
 
             {/* Customer Account Routes */}
             <Route path="/account" element={<AccountPage />} />

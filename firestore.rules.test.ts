@@ -11,9 +11,14 @@ import {
   getLagosDateKey,
   mapOrderStatusToDeliveryStatus,
   nairaToKobo,
+  EMAIL_TYPE_LABELS,
 } from './src/utils/nigerianCurrency';
 import {
+  buildAdminNewCustomerEmail,
   buildAdminNewOrderEmail,
+  buildAdminPaymentSubmittedEmail,
+  buildAdminRefundConfirmedEmail,
+  buildAdminStatusStageEmail,
   buildCustomerOrderPlacedEmail,
   buildCustomerOrderReceivedEmail,
   buildCustomerPaymentRejectedEmail,
@@ -22,6 +27,7 @@ import {
   buildCustomerRefundConfirmedEmail,
   EmailTemplateContext,
 } from './src/utils/emailTemplates';
+import { DEFAULT_EMAIL_PREFERENCES } from './src/config/defaultStoreContent';
 import { matchDeliveryZone, NIGERIAN_STATES } from './src/utils/nigeriaLocations';
 import { DeliveryZone, Discount, Product } from './src/types/ecommerce';
 import {
@@ -32,6 +38,11 @@ import {
 } from './functions/src/brevoClient';
 import { resolveImageUrl } from './src/utils/imageUrl';
 import { CATALOG_IMAGES } from './src/assets/catalogImages';
+import {
+  formatAuthError,
+  validateEmailFormat,
+  validateResetPasswordForm,
+} from './src/utils/authErrors';
 
 const sampleProduct: Product = {
   productId: 'prod-1',
@@ -244,6 +255,57 @@ test('Automated HTML email templates render order IDs, NGN totals, bank instruct
   const placedAdmin = buildAdminNewOrderEmail(ctx);
   assert.equal(placedAdmin.subject, 'New Order Received – ORD-20261113-0001');
   assert.ok(placedAdmin.html.includes('/admin/orders/ord_123'));
+  assert.ok(placedAdmin.html.includes('Nigerian Bank Transfer'));
+  assert.ok(placedAdmin.html.includes('08031234567'));
+  assert.ok(placedAdmin.html.includes('12 Adeola Odeku, Lekki, Lagos'));
+  assert.ok(placedAdmin.html.includes('83,500'));
+
+  const paySubAdmin = buildAdminPaymentSubmittedEmail(ctx);
+  assert.equal(paySubAdmin.subject, 'Payment Verification Required – ORD-20261113-0001');
+  assert.ok(paySubAdmin.html.includes('TRF-998877'));
+  assert.ok(paySubAdmin.html.includes('13 Nov 2026, 10:15 WAT'));
+  assert.ok(paySubAdmin.html.includes('/admin/orders/ord_123'));
+
+  const newCustAdmin = buildAdminNewCustomerEmail({
+    storeName: 'KoraMarket Nigeria',
+    appUrl: 'https://koramarket.ng',
+    customerId: 'uid_customer_1',
+    customerName: 'Chinedu Okafor',
+    customerEmail: 'chinedu@example.com',
+    customerPhone: '08031234567',
+    timestampWat: '13 Nov 2026, 10:15 WAT',
+  });
+  assert.equal(newCustAdmin.subject, 'New Customer Registered – Chinedu Okafor');
+  assert.ok(newCustAdmin.html.includes('chinedu@example.com'));
+  assert.ok(newCustAdmin.html.includes('/admin/customers'));
+  assert.doesNotMatch(newCustAdmin.html, /password|BREVO_API_KEY|xkeysib/i);
+
+  for (const stage of ['order_processing', 'ready_for_dispatch', 'out_for_delivery', 'order_delivered'] as const) {
+    const stageEmail = buildAdminStatusStageEmail(
+      {
+        ...ctx,
+        deliveryPersonnel: 'GIG Logistics',
+        trackingNotes: 'GIG-12345',
+      },
+      stage
+    );
+    assert.ok(stageEmail.subject.includes('ORD-20261113-0001'));
+    assert.ok(stageEmail.html.includes('/admin/orders/ord_123'));
+  }
+
+  const refundAdmin = buildAdminRefundConfirmedEmail(ctx);
+  assert.equal(refundAdmin.subject, 'Refund Confirmed – ORD-20261113-0001');
+  assert.ok(refundAdmin.html.includes('GTBank reversal REF-5544'));
+
+  // Verify default admin inbox and all 12 admin events exist in DEFAULT_EMAIL_PREFERENCES & labels
+  assert.equal(DEFAULT_EMAIL_PREFERENCES.adminNotificationEmail, 'reddox528@gmail.com');
+  assert.equal(DEFAULT_EMAIL_PREFERENCES.events.newCustomerAdmin, true);
+  assert.equal(DEFAULT_EMAIL_PREFERENCES.events.orderProcessingAdmin, true);
+  assert.equal(DEFAULT_EMAIL_PREFERENCES.events.readyForDispatchAdmin, true);
+  assert.equal(DEFAULT_EMAIL_PREFERENCES.events.outForDeliveryAdmin, true);
+  assert.equal(DEFAULT_EMAIL_PREFERENCES.events.deliveredAdmin, true);
+  assert.equal(DEFAULT_EMAIL_PREFERENCES.events.refundConfirmedAdmin, true);
+  assert.equal(EMAIL_TYPE_LABELS.new_customer, 'New Customer Registered');
 
   const receivedCust = buildCustomerOrderReceivedEmail({ ...ctx, orderStatusLabel: 'Received' });
   assert.equal(receivedCust.subject, 'Your Order Has Been Received – ORD-20261113-0001');
@@ -447,3 +509,70 @@ test('Image URL resolver maps legacy dev paths, hashed Vite paths, and Drive URL
   // Fallback when empty
   assert.equal(resolveImageUrl('', CATALOG_IMAGES.heroModernCommerce), CATALOG_IMAGES.heroModernCommerce);
 });
+
+test('Firebase Auth error formatter and password reset validators map error codes and enforce password rules', () => {
+  assert.equal(validateEmailFormat('customer@example.com'), true);
+  assert.equal(validateEmailFormat('  user.name+tag@domain.ng  '), true);
+  assert.equal(validateEmailFormat('invalid-email'), false);
+  assert.equal(validateEmailFormat('missing@domain'), false);
+
+  assert.equal(validateResetPasswordForm('', ''), 'Please enter a new password.');
+  assert.equal(
+    validateResetPasswordForm('12345', '12345'),
+    'Password must be at least 6 characters long.'
+  );
+  assert.equal(
+    validateResetPasswordForm('SecurePass1!', 'DifferentPass1!'),
+    'Passwords do not match. Please re-enter both fields.'
+  );
+  assert.equal(validateResetPasswordForm('SecurePass1!', 'SecurePass1!'), null);
+
+  assert.match(formatAuthError({ code: 'auth/invalid-credential' }), /Incorrect email or password/i);
+  assert.match(formatAuthError({ code: 'auth/expired-action-code' }), /expired/i);
+  assert.match(formatAuthError({ code: 'auth/invalid-action-code' }), /invalid or has already been used/i);
+  assert.match(formatAuthError({ code: 'auth/too-many-requests' }), /wait a few minutes/i);
+  assert.match(formatAuthError({ code: 'auth/unauthorized-domain' }), /Authorized domains/i);
+  assert.match(formatAuthError({ code: 'auth/operation-not-allowed' }), /Sign-in method/i);
+});
+
+test('Firebase configuration targets reddox211 (160789406869) cleanly with singleton initialization and zero Default Gemini Project references', () => {
+  const appletConfig = JSON.parse(fs.readFileSync(path.resolve('firebase-applet-config.json'), 'utf8'));
+  const firebaserc = JSON.parse(fs.readFileSync(path.resolve('.firebaserc'), 'utf8'));
+  const firebaseTs = fs.readFileSync(path.resolve('src/firebase.ts'), 'utf8');
+  const authContextTsx = fs.readFileSync(path.resolve('src/context/AuthContext.tsx'), 'utf8');
+  const authPagesTsx = fs.readFileSync(path.resolve('src/pages/store/AuthPages.tsx'), 'utf8');
+  const appTsx = fs.readFileSync(path.resolve('src/App.tsx'), 'utf8');
+
+  assert.equal(appletConfig.projectId, 'reddox211');
+  assert.equal(appletConfig.messagingSenderId, '160789406869');
+  assert.equal(appletConfig.authDomain, 'reddox211.firebaseapp.com');
+  assert.equal(appletConfig.storageBucket, 'reddox211.firebasestorage.app');
+  assert.equal(firebaserc.projects.default, 'reddox211');
+
+  assert.match(firebaseTs, /getApps\(\)\.length > 0 \? getApp\(\) : initializeApp\(firebaseConfig\)/);
+  assert.match(authContextTsx, /browserLocalPersistence/);
+  assert.match(authContextTsx, /verifyPasswordResetCode/);
+  assert.match(authContextTsx, /confirmPasswordReset/);
+  assert.match(authPagesTsx, /Forgot Your Password\?/);
+  assert.match(authPagesTsx, /Send Reset Link/);
+  assert.match(authPagesTsx, /Update Password/);
+  assert.match(appTsx, /path="\/reset-password"/);
+  assert.match(appTsx, /path="\/auth\/action"/);
+
+  const filesToCheck = [
+    'firebase-applet-config.json',
+    '.firebaserc',
+    'firebase.json',
+    'server.ts',
+    'src/firebase.ts',
+    'src/context/AuthContext.tsx',
+    'src/pages/store/AuthPages.tsx',
+    'functions/src/index.ts',
+    'README.md',
+  ];
+  for (const rel of filesToCheck) {
+    const content = fs.readFileSync(path.resolve(rel), 'utf8');
+    assert.doesNotMatch(content, /gen-lang-client-0329974020/i, `Unexpected old project ID in ${rel}`);
+  }
+});
+
